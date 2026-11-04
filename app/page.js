@@ -6,6 +6,7 @@ import {
 } from '@/lib/dates';
 import Grid from './Grid';
 import MealPicker from './MealPicker';
+import Fame from './Fame';
 import { MEAL_PRICE } from '@/lib/config';
 import { downloadWeekXlsx } from '@/lib/excel';
 
@@ -121,6 +122,7 @@ const TABS = [
   { id: 'week', label: 'Moja nedelja', icon: '📅' },
   { id: 'menu', label: 'Meni', icon: '📋' },
   { id: 'overview', label: 'Pregled', icon: '📊' },
+  { id: 'fame', label: 'Slava', icon: '🏆' },
   { id: 'profile', label: 'Profil', icon: '👤' },
 ];
 
@@ -152,6 +154,7 @@ function App({ user, onLogout }) {
         {tab === 'week' && <WeekTab user={user} menu={menu} week={week} setWeek={setWeek} goMenu={() => setTab('menu')} />}
         {tab === 'menu' && <MenuTab menu={menu} reload={loadMenu} />}
         {tab === 'overview' && <OverviewTab week={week} setWeek={setWeek} />}
+        {tab === 'fame' && <Fame />}
         {tab === 'profile' && <ProfileTab user={user} onLogout={onLogout} />}
       </main>
 
