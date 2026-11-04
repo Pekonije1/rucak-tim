@@ -625,12 +625,31 @@ function ProfileTab({ user, onLogout, theme, onTheme }) {
 
 function UsersAdmin({ me }) {
   const [users, setUsers] = useState([]);
+  const [emails, setEmails] = useState({});
+  const [draft, setDraft] = useState({});
   const [name, setName] = useState('');
   const [err, setErr] = useState('');
+  const [ok, setOk] = useState('');
 
   const load = useCallback(() => {
     api('/api/users').then((d) => setUsers(d.users)).catch(() => {});
-  }, []);
+    api('/api/email', { headers: { 'x-user': me } }).then((d) => { setEmails(d.emails); setDraft(d.emails); }).catch(() => {});
+  }, [me]);
+
+  async function saveEmail(u) {
+    const value = (draft[u] || '').trim();
+    if (value === (emails[u] || '')) return;
+    setErr('');
+    setOk('');
+    try {
+      const d = await api('/api/email', { method: 'PUT', body: JSON.stringify({ user: u, email: value }) });
+      setEmails((e) => ({ ...e, [u]: d.email }));
+      setDraft((e) => ({ ...e, [u]: d.email }));
+      setOk(`Sačuvano za ${u} ✓`);
+    } catch (e2) {
+      setErr(`${u}: ${e2.message}`);
+    }
+  }
   useEffect(load, [load]);
 
   async function add(e) {
@@ -660,16 +679,27 @@ function UsersAdmin({ me }) {
   return (
     <div className="card">
       <h3>👑 Korisnici</h3>
-      <p className="muted small">Samo ti vidiš ovo. Brisanje uklanja i sve porudžbine tog korisnika.</p>
+      <p className="muted small">Samo ti vidiš ovo. Email se čuva kad izađeš iz polja ili pritisneš Enter. Brisanje uklanja i sve porudžbine tog korisnika.</p>
       <form className="addform" onSubmit={add}>
         <input className="input" placeholder="Ime novog korisnika" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
         <button className="btn primary">Dodaj</button>
       </form>
       {err && <p className="error">{err}</p>}
+      {ok && <p className="muted small" style={{ marginTop: 8 }}>{ok}</p>}
       <div className="list">
         {users.map((u) => (
-          <div key={u} className="row">
-            <span className="grow">{u}</span>
+          <div key={u} className="row admin-row">
+            <span className="admin-name">{u}</span>
+            <input
+              className="input admin-email"
+              type="email"
+              inputMode="email"
+              placeholder="email"
+              value={draft[u] || ''}
+              onChange={(e) => setDraft((d) => ({ ...d, [u]: e.target.value }))}
+              onBlur={() => saveEmail(u)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } }}
+            />
             {u !== me && (
               <button className="btn sm danger" onClick={() => remove(u)} aria-label={`Obriši ${u}`}>✕</button>
             )}

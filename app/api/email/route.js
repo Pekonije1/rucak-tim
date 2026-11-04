@@ -1,4 +1,5 @@
 import { store } from '@/lib/db';
+import { ADMIN } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
@@ -6,8 +7,12 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export async function GET(req) {
   const user = new URL(req.url).searchParams.get('user');
-  if (!user) return Response.json({ error: 'Nedostaje ime' }, { status: 400 });
   const emails = await store.hgetall('emails');
+  if (!user) {
+    // Svi mejlovi, samo za admina
+    if (req.headers.get('x-user') !== ADMIN) return Response.json({ error: 'Nije dozvoljeno' }, { status: 403 });
+    return Response.json({ emails });
+  }
   return Response.json({ email: emails[user] || '' });
 }
 
