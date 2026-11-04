@@ -400,3 +400,6 @@ textarea.input { line-height: 1.45; }
 .admin-grid { display: grid; gap: 0 12px; grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 640px) { .admin-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (min-width: 960px) { .admin-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+
+.stats-pair { display: grid; gap: 0 12px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+@media (min-width: 960px) { .stats-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }

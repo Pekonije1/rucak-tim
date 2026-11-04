@@ -520,34 +520,14 @@ function OverviewTab({ week, setWeek, menu, user }) {
         />
       )}
 
-      {!orders ? (
-        <p className="muted center">Učitavam…</p>
-      ) : !hasAny ? (
-        <div className="card empty"><p className="muted">Niko još nije poručio za ovu nedelju.</p></div>
-      ) : (
-        <div className="grid2">
-          <div className="days">
-            {byDay.map((d, i) => (
-              <div key={d.date} data-dow={i} className={'card day' + (d.date === todayISO() ? ' today' : '')}>
-                <div className="day-head">
-                  <div><strong>{d.name}</strong> <span className="muted small">{fmtDate(d.date)}</span>{d.date === todayISO() && <span className="today-badge">Danas</span>}</div>
-                  {d.items.length > 0 && <span className="pill">{d.items.reduce((s, i) => s + i.qty, 0)} jela</span>}
-                </div>
-                {d.items.length === 0 && <p className="muted small">Ništa</p>}
-                {d.items.map((i) => (
-                  <div key={i.name} className="line">
-                    <div className="line-name">
-                      <span>{i.name} <strong>x{i.qty}</strong></span>
-                      <span className="muted small">{i.people.join(', ')}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ))}
-          </div>
-
-          <div className="card">
-            <h3>Ova nedelja po osobi</h3>
+      <div className="stats-pair">
+        <div className="card">
+          <h3>Ova nedelja po osobi</h3>
+          {!orders ? (
+            <p className="muted small">Učitavam…</p>
+          ) : !hasAny ? (
+            <p className="muted small">Niko još nije poručio za ovu nedelju.</p>
+          ) : (
             <table className="table">
               <thead><tr><th>Ime</th><th>Jela</th><th>Iznos</th></tr></thead>
               <tbody>
@@ -557,34 +537,34 @@ function OverviewTab({ week, setWeek, menu, user }) {
               </tbody>
               <tfoot><tr><td>Ukupno</td><td>{perPerson.reduce((s, p) => s + p.meals, 0)}</td><td>{eur(weekTotal)}</td></tr></tfoot>
             </table>
-          </div>
+          )}
         </div>
-      )}
 
-      <div className="card">
-        <div className="day-head">
-          <h3>Mjesečni obračun</h3>
-          <input type="month" className="input month" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} />
+        <div className="card">
+          <div className="day-head">
+            <h3>Mjesečni obračun</h3>
+            <input type="month" className="input month" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} />
+          </div>
+          {!stats ? (
+            <p className="muted small">Učitavam…</p>
+          ) : (
+            <table className="table">
+              <thead><tr><th>Ime</th><th>Jela</th><th>Iznos</th></tr></thead>
+              <tbody>
+                {stats.users.map((u) => (
+                  <tr key={u.name}><td>{u.name}</td><td>{u.meals}</td><td>{eur(u.total)}</td></tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr>
+                  <td>Ukupno</td>
+                  <td>{stats.users.reduce((s, u) => s + u.meals, 0)}</td>
+                  <td>{eur(stats.users.reduce((s, u) => s + u.total, 0))}</td>
+                </tr>
+              </tfoot>
+            </table>
+          )}
         </div>
-        {!stats ? (
-          <p className="muted small">Učitavam…</p>
-        ) : (
-          <table className="table">
-            <thead><tr><th>Ime</th><th>Jela</th><th>Iznos</th></tr></thead>
-            <tbody>
-              {stats.users.map((u) => (
-                <tr key={u.name}><td>{u.name}</td><td>{u.meals}</td><td>{eur(u.total)}</td></tr>
-              ))}
-            </tbody>
-            <tfoot>
-              <tr>
-                <td>Ukupno</td>
-                <td>{stats.users.reduce((s, u) => s + u.meals, 0)}</td>
-                <td>{eur(stats.users.reduce((s, u) => s + u.total, 0))}</td>
-              </tr>
-            </tfoot>
-          </table>
-        )}
       </div>
     </section>
   );
