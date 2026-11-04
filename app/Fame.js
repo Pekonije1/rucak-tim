@@ -47,7 +47,7 @@ export default function Fame() {
       <div className="fame-head">
         <div>
           <h2>🏆 Hall of fame</h2>
-          <p className="muted small">Titule za {monthLabel(month)} Kalorije su procjena od oka, ne nauka.</p>
+          <p className="muted small">Titule za {monthLabel(month)}, računaju se samo dani do danas. Kalorije su procjena od oka, ne nauka.</p>
         </div>
         <input type="month" className="input month" value={month} onChange={(e) => e.target.value && setMonth(e.target.value)} />
       </div>

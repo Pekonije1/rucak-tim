@@ -8,6 +8,8 @@ export async function GET(req) {
   const month = new URL(req.url).searchParams.get('month');
   if (!MONTH_RE.test(month || '')) return Response.json({ error: 'Neispravan mjesec' }, { status: 400 });
 
+  // Samo dani do danas (po podgoričkom vremenu), budući se ne računaju
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Podgorica' }).format(new Date());
   const mondays = mondaysForMonth(month);
   const weeks = await Promise.all(mondays.map((m) => store.hgetall(`week:${m}`)));
   const names = await store.smembers('users');
@@ -19,7 +21,7 @@ export async function GET(req) {
   weeks.forEach((w) => {
     for (const [name, order] of Object.entries(w || {})) {
       for (const [date, lines] of Object.entries(order?.days || {})) {
-        if (!date.startsWith(month)) continue;
+        if (!date.startsWith(month) || date > today) continue;
         for (const l of lines) {
           (users[name] ??= []).push({ date, name: l.name });
           active.add(date);
