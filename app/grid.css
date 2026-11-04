@@ -1,0 +1,61 @@
+.grid-card { padding: 16px; }
+.grid-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+.gtable {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.92rem;
+}
+.gtable th, .gtable td {
+  padding: 10px 8px;
+  text-align: center;
+  vertical-align: middle;
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.gtable tr > *:last-child { border-right: none; }
+.gtable tbody tr:last-child > * { border-bottom: none; }
+.gtable thead th {
+  background: #e8955a;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+.gtable thead th span { display: block; font-weight: 500; font-size: 0.75rem; opacity: 0.85; }
+.gtable .gname {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: #1f3fa8;
+  color: #fff;
+  font-weight: 700;
+  white-space: nowrap;
+  min-width: 110px;
+}
+.gtable thead .gcorner { z-index: 2; background: var(--card); }
+.gtable td div + div { margin-top: 4px; }
+.gtable .gsum { font-weight: 700; white-space: nowrap; }
+.gtable thead .gsum { background: #c96f35; }
+.gempty { color: var(--muted); }
+
+.gcards { display: none; }
+.gcard {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  background: var(--bg);
+}
+.gcard-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+.gcard-row { display: flex; gap: 10px; padding: 7px 0; border-top: 1px solid var(--border); }
+.gday { width: 34px; flex-shrink: 0; color: var(--muted); font-size: 0.85rem; font-weight: 600; padding-top: 1px; }
+
+@media (max-width: 639px) {
+  .grid-scroll { display: none; }
+  .gcards { display: grid; gap: 10px; }
+}
