@@ -380,3 +380,14 @@ textarea.input { line-height: 1.45; }
 
 .pin-input { text-align: center; font-size: 1.6rem; letter-spacing: 0.5em; text-indent: 0.5em; margin-top: 8px; }
 .login-card form .btn.full + .btn.full { margin-top: 8px; }
+
+/* Administracija */
+.admin-stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.admin-stats .card { margin-bottom: 0; }
+.admin-stats + .card { margin-top: 12px; }
+.admin-table td.ok { color: var(--green-ink); font-weight: 700; }
+.admin-table td.warn { color: var(--red-ink); font-weight: 700; }
+.admin-table td:not(:first-child), .admin-table th:not(:first-child) { text-align: center; }
+.admin-grid { display: grid; gap: 0 12px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 640px) { .admin-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (min-width: 960px) { .admin-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }

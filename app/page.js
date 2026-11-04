@@ -151,11 +151,13 @@ const TABS = [
   { id: 'fame', label: 'Slava', icon: '🏆' },
   { id: 'profile', label: 'Profil', icon: '👤' },
 ];
+const ADMIN_TAB = { id: 'admin', label: 'Admin', icon: '🛠️' };
 
 function App({ user, onLogout, startWeek }) {
   const [tab, setTab] = useState('week');
   const [menu, setMenu] = useState([]);
   const [week, setWeek] = useState(() => startWeek || toISO(mondayOf(new Date())));
+  const tabs = isAdmin(user) ? [...TABS, ADMIN_TAB] : TABS;
   const [theme, setTheme] = useState('system');
   useEffect(() => setTheme(readTheme()), []);
   const changeTheme = (t) => { applyTheme(t); setTheme(t); };
@@ -171,7 +173,7 @@ function App({ user, onLogout, startWeek }) {
       <header className="topbar">
         <div className="brand"><span className="brand-dots" aria-hidden="true"><i /><i /><i /><i /></span>Ručak <span className="brand-emoji">🍽️</span></div>
         <nav className="tabs-top">
-          {TABS.map((t) => (
+          {tabs.map((t) => (
             <button key={t.id} className={'tab' + (tab === t.id ? ' active' : '')} onClick={() => setTab(t.id)}>
               {t.label}
             </button>
@@ -193,11 +195,12 @@ function App({ user, onLogout, startWeek }) {
         {tab === 'menu' && <MenuTab menu={menu} reload={loadMenu} />}
         {tab === 'overview' && <OverviewTab week={week} setWeek={setWeek} menu={menu} user={user} />}
         {tab === 'fame' && <Fame />}
+        {tab === 'admin' && isAdmin(user) && <AdminTab me={user} week={week} />}
         {tab === 'profile' && <ProfileTab user={user} onLogout={onLogout} theme={theme} onTheme={changeTheme} />}
       </main>
 
-      <nav className="tabs-bottom">
-        {TABS.map((t) => (
+      <nav className="tabs-bottom" style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
+        {tabs.map((t) => (
           <button key={t.id} className={'btab' + (tab === t.id ? ' active' : '')} onClick={() => setTab(t.id)}>
             <span className="bicon">{t.icon}</span>
             <span>{t.label}</span>
@@ -633,8 +636,6 @@ function ProfileTab({ user, onLogout, theme, onTheme }) {
 
       <EmailCard user={user} />
 
-      {isAdmin(user) && <UsersAdmin me={user} />}
-      {isAdmin(user) && <SendReminder me={user} />}
 
       <div className="card">
         <h3>Tema</h3>
@@ -652,7 +653,7 @@ function ProfileTab({ user, onLogout, theme, onTheme }) {
   );
 }
 
-function UsersAdmin({ me }) {
+function UsersAdmin({ me, onChange }) {
   const [users, setUsers] = useState([]);
   const [emails, setEmails] = useState({});
   const [draft, setDraft] = useState({});
@@ -663,7 +664,8 @@ function UsersAdmin({ me }) {
   const load = useCallback(() => {
     api('/api/users').then((d) => setUsers(d.users)).catch(() => {});
     api('/api/email').then((d) => { setEmails(d.emails); setDraft(d.emails); }).catch(() => {});
-  }, [me]);
+    onChange?.();
+  }, [me]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function saveEmail(u) {
     const value = (draft[u] || '').trim();
@@ -732,8 +734,8 @@ function UsersAdmin({ me }) {
       <p className="muted small">Vide samo admini (Peko i Tami). Email se čuva kad izađeš iz polja ili pritisneš Enter. Brisanje uklanja i sve porudžbine tog korisnika.</p>
       <form className="addform" onSubmit={add}>
         <input className="input" placeholder="Ime novog korisnika" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
-        <input className="input price" placeholder="PIN (opciono)" inputMode="numeric" maxLength={6} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))} />
-        <input className="input" style={{ flex: '1 1 200px' }} type="email" inputMode="email" placeholder="email (opciono, PIN stiže na njega)" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
+        <input className="input price" placeholder="PIN" inputMode="numeric" maxLength={6} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))} />
+        <input className="input" style={{ flex: '1 1 200px' }} type="email" inputMode="email" placeholder="email (PIN stiže na njega)" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
         <button className="btn primary">Dodaj</button>
       </form>
       {err && <p className="error">{err}</p>}
@@ -807,9 +809,6 @@ function EmailCard({ user }) {
         <input className="input" type="email" inputMode="email" placeholder="tvoj@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
         <button className="btn primary">Sačuvaj</button>
       </form>
-      {isAdmin(user) && saved && (
-        <button className="btn full" onClick={test} disabled={busy}>{busy ? 'Šaljem…' : 'Pošalji mi probni mejl'}</button>
-      )}
       {msg && <p className="muted small" style={{ marginTop: 8 }}>{msg}</p>}
     </div>
   );
@@ -866,5 +865,93 @@ function SendReminder({ me }) {
         </div>
       )}
     </div>
+  );
+}
+
+function AdminTab({ me }) {
+  const nextWeek = nextMondayISO();
+  const [data, setData] = useState(null);
+  const [testMsg, setTestMsg] = useState('');
+  const [testing, setTesting] = useState(false);
+  const [refresh, setRefresh] = useState(0);
+
+  useEffect(() => {
+    Promise.all([api('/api/users'), api('/api/email'), api(`/api/orders?week=${nextWeek}`)])
+      .then(([u, e, o]) => setData({ users: u.users, withPin: u.withPin || [], emails: e.emails || {}, orders: o.orders || {} }))
+      .catch(() => setData({ users: [], withPin: [], emails: {}, orders: {} }));
+  }, [nextWeek, refresh]);
+
+  async function test() {
+    setTesting(true);
+    setTestMsg('');
+    try {
+      const d = await api('/api/cron/reminder?test=1');
+      setTestMsg(d.sent?.length ? 'Probni mejl poslat na tvoju adresu ✓' : d.failed?.[0]?.error || d.note || 'Ništa nije poslato');
+    } catch (e) {
+      setTestMsg(e.message);
+    } finally {
+      setTesting(false);
+    }
+  }
+
+  const days = weekDays(nextWeek);
+  const filled = (n) => Object.keys(data?.orders?.[n]?.days || {}).length;
+  const total = data?.users.length || 0;
+  const pinCount = data?.withPin.length || 0;
+  const mailCount = data ? data.users.filter((u) => data.emails[u]).length : 0;
+  const doneCount = data ? data.users.filter((u) => filled(u) > 0).length : 0;
+
+  return (
+    <section>
+      <h2>🛠️ Administracija</h2>
+      <p className="muted small">Vide samo admini. Korisnici, PIN-ovi, mejlovi i podsjetnici na jednom mjestu.</p>
+
+      <div className="admin-stats">
+        <div className="card stat"><span className="muted small">Korisnika</span><strong>{data ? total : '…'}</strong></div>
+        <div className="card stat"><span className="muted small">Ima PIN</span><strong>{data ? `${pinCount}/${total}` : '…'}</strong></div>
+        <div className="card stat"><span className="muted small">Ima mejl</span><strong>{data ? `${mailCount}/${total}` : '…'}</strong></div>
+        <div className="card stat"><span className="muted small">Popunilo narednu</span><strong>{data ? `${doneCount}/${total}` : '…'}</strong></div>
+      </div>
+
+      <div className="card">
+        <div className="day-head">
+          <h3>📋 Stanje za narednu nedelju</h3>
+          <span className="muted small">{fmtDate(days[0].date)} – {fmtDate(days[4].date)}</span>
+        </div>
+        {!data ? <p className="muted small">Učitavam…</p> : (
+          <table className="table admin-table">
+            <thead><tr><th>Ime</th><th>PIN</th><th>Mejl</th><th>Popunjeno</th></tr></thead>
+            <tbody>
+              {data.users.map((u) => {
+                const f = filled(u);
+                return (
+                  <tr key={u}>
+                    <td><strong>{u}</strong>{isAdmin(u) && <span className="muted small"> · admin</span>}</td>
+                    <td>{data.withPin.includes(u) ? '✅' : <span className="muted">–</span>}</td>
+                    <td>{data.emails[u] ? '✅' : <span className="muted">–</span>}</td>
+                    <td className={f === 5 ? 'ok' : f === 0 ? 'warn' : ''}>{f}/5</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+      </div>
+
+      <div className="admin-grid">
+        <div>
+          <UsersAdmin me={me} onChange={() => setRefresh((r) => r + 1)} />
+        </div>
+        <div>
+          <SendReminder me={me} />
+          <div className="card">
+            <h3>🧪 Probni mejl</h3>
+            <p className="muted small">Šalje podsjetnik samo tebi, da vidiš kako izgleda i da li Gmail radi.</p>
+            <button className="btn full" onClick={test} disabled={testing} style={{ marginTop: 4 }}>{testing ? 'Šaljem…' : 'Pošalji mi probni mejl'}</button>
+            {testMsg && <p className="muted small" style={{ marginTop: 8 }}>{testMsg}</p>}
+          </div>
+        </div>
+      </div>
+    </section>
   );
 }
