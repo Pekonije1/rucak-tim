@@ -606,6 +606,7 @@ function ProfileTab({ user, onLogout, theme, onTheme }) {
       <EmailCard user={user} />
 
       {isAdmin(user) && <UsersAdmin me={user} />}
+      {isAdmin(user) && <SendReminder me={user} />}
 
       <div className="card">
         <h3>Tema</h3>
@@ -758,6 +759,60 @@ function EmailCard({ user }) {
         <button className="btn full" onClick={test} disabled={busy}>{busy ? 'Šaljem…' : 'Pošalji mi probni mejl'}</button>
       )}
       {msg && <p className="muted small" style={{ marginTop: 8 }}>{msg}</p>}
+    </div>
+  );
+}
+
+function SendReminder({ me }) {
+  const [message, setMessage] = useState('');
+  const [mode, setMode] = useState('missing');
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState(null);
+
+  async function send() {
+    const who = mode === 'all' ? 'svima koji imaju email' : 'onima koji nisu popunili narednu nedelju';
+    if (!confirm(`Poslati podsjetnik ${who}?`)) return;
+    setBusy(true);
+    setResult(null);
+    try {
+      const d = await api('/api/remind', { method: 'POST', headers: { 'x-user': me }, body: JSON.stringify({ message, mode }) });
+      setResult(d);
+      if (d.sent?.length) setMessage('');
+    } catch (e) {
+      setResult({ error: e.message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card">
+      <h3>📣 Pošalji podsjetnik</h3>
+      <p className="muted small">Mejl ide odmah. Poruka se prikazuje na vrhu mejla, a možeš je i preskočiti.</p>
+      <textarea
+        className="input"
+        rows={3}
+        placeholder="npr. Ljudi, do ponedeljka u 9 da je sve popunjeno 🙏"
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        maxLength={1000}
+        style={{ resize: 'vertical', marginBottom: 10 }}
+      />
+      <div className="seg" style={{ gridTemplateColumns: '1fr 1fr', marginBottom: 10 }}>
+        <button className={mode === 'missing' ? 'active' : ''} onClick={() => setMode('missing')}>Nisu popunili</button>
+        <button className={mode === 'all' ? 'active' : ''} onClick={() => setMode('all')}>Svima sa mejlom</button>
+      </div>
+      <button className="btn primary full" onClick={send} disabled={busy} style={{ marginTop: 0 }}>
+        {busy ? 'Šaljem…' : 'Pošalji podsjetnik'}
+      </button>
+      {result && (
+        <div className="small" style={{ marginTop: 10 }}>
+          {result.error && <p className="error">{result.error}</p>}
+          {result.sent?.length > 0 && <p>✅ Poslato: {result.sent.join(', ')}</p>}
+          {result.failed?.length > 0 && <p className="error">❌ Nije prošlo: {result.failed.map((f) => `${f.name} (${f.error})`).join(', ')}</p>}
+          {!result.error && !result.sent?.length && !result.failed?.length && <p className="muted">{result.note || 'Nema kome da se šalje.'}</p>}
+        </div>
+      )}
     </div>
   );
 }
