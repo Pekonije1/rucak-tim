@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  addDays, currentMonth, fmtDate, nextMondayISO, parseISO, toISO, weekDays,
+  addDays, currentMonth, fmtDate, mondayOf, nextMondayISO, parseISO, toISO, weekDays,
 } from '@/lib/dates';
 import Grid from './Grid';
 import { MEAL_PRICE } from '@/lib/config';
@@ -125,7 +125,7 @@ const TABS = [
 function App({ user, onLogout }) {
   const [tab, setTab] = useState('week');
   const [menu, setMenu] = useState([]);
-  const [week, setWeek] = useState(nextMondayISO);
+  const [week, setWeek] = useState(() => toISO(mondayOf(new Date())));
 
   const loadMenu = useCallback(() => {
     api('/api/menu').then((d) => setMenu(d.items)).catch(() => {});
