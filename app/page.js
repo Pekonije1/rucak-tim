@@ -5,6 +5,7 @@ import {
   addDays, currentMonth, fmtDate, mondayOf, nextMondayISO, parseISO, toISO, weekDays,
 } from '@/lib/dates';
 import Grid from './Grid';
+import MealPicker from './MealPicker';
 import { MEAL_PRICE } from '@/lib/config';
 import { downloadWeekXlsx } from '@/lib/excel';
 
@@ -285,7 +286,6 @@ function WeekTab({ user, menu, week, setWeek, goMenu }) {
         <div className="days">
           {weekDays(week).map((d) => {
             const line = days[d.date]?.[0];
-            const missing = line && !menu.some((m) => m.id === line.itemId);
             return (
               <div key={d.date} className="card day">
                 <div className="day-head">
@@ -294,17 +294,12 @@ function WeekTab({ user, menu, week, setWeek, goMenu }) {
                   </div>
                   {line && <span className="pill">{eur(line.price)}</span>}
                 </div>
-                <select
-                  className="input select"
-                  value={line ? (missing ? '__old' : line.itemId) : ''}
-                  onChange={(e) => e.target.value !== '__old' && setMeal(d.date, e.target.value)}
-                >
-                  <option value="">Bez jela</option>
-                  {missing && <option value="__old">{line.name}</option>}
-                  {menu.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
-                </select>
+                <MealPicker
+                  value={line?.itemId || ''}
+                  label={line?.name}
+                  menu={menu}
+                  onChange={(id) => setMeal(d.date, id)}
+                />
               </div>
             );
           })}
