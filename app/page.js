@@ -176,7 +176,7 @@ function App({ user, onLogout, startWeek }) {
       <main className="content">
         {tab === 'week' && <WeekTab user={user} menu={menu} week={week} setWeek={setWeek} goMenu={() => setTab('menu')} />}
         {tab === 'menu' && <MenuTab menu={menu} reload={loadMenu} />}
-        {tab === 'overview' && <OverviewTab week={week} setWeek={setWeek} />}
+        {tab === 'overview' && <OverviewTab week={week} setWeek={setWeek} menu={menu} user={user} />}
         {tab === 'fame' && <Fame />}
         {tab === 'profile' && <ProfileTab user={user} onLogout={onLogout} theme={theme} onTheme={changeTheme} />}
       </main>
@@ -401,7 +401,7 @@ function MenuTab({ menu, reload }) {
   );
 }
 
-function OverviewTab({ week, setWeek }) {
+function OverviewTab({ week, setWeek, menu, user }) {
   const [orders, setOrders] = useState(null);
   const [month, setMonth] = useState(currentMonth);
   const [stats, setStats] = useState(null);
@@ -487,7 +487,20 @@ function OverviewTab({ week, setWeek }) {
         <button className="btn" onClick={downloadExcel} disabled={!hasAny || exporting}>{exporting ? 'Pravim Excel…' : 'Preuzmi Excel'}</button>
       </div>
 
-      {orders && <Grid week={week} orders={orders} />}
+      {orders && (
+        <Grid
+          week={week}
+          orders={orders}
+          menu={menu}
+          editable={isAdmin(user)}
+          onEdit={(n, days) => setOrders((o) => {
+            const next = { ...o };
+            if (Object.keys(days).length) next[n] = { ...(o[n] || {}), days };
+            else delete next[n];
+            return next;
+          })}
+        />
+      )}
 
       {!orders ? (
         <p className="muted center">Učitavam…</p>

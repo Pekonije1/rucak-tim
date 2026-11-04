@@ -38,3 +38,16 @@
   }
   .mp-item { padding: 10px; }
 }
+
+/* Kompaktna varijanta za ćelije tabele (admin) */
+.mp-compact { margin: 0; }
+.mp-cell {
+  font: inherit; color: inherit; background: none; border: 1px dashed transparent;
+  width: 100%; min-height: 36px; padding: 6px 8px; border-radius: 8px; cursor: pointer; text-align: center;
+}
+.mp-cell:not(.mp-set) { color: var(--muted); }
+.mp-cell:hover, .mp-cell:focus-visible { border-color: var(--accent); background: var(--accent-soft); outline: none; }
+@media (min-width: 640px) {
+  .mp-pop.mp-fixed { position: fixed; top: auto; z-index: 60; }
+  .mp-compact .mp-backdrop { z-index: 59; }
+}

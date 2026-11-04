@@ -66,3 +66,6 @@
 .gtable td.gtoday { background: var(--accent-soft); font-weight: 700; }
 .gcard-row.gtoday { background: var(--accent-soft); border-radius: 8px; padding-left: 8px; padding-right: 8px; font-weight: 700; }
 .gcard-row.gtoday .gday { color: var(--accent); }
+
+.gtable td.gedit { padding: 4px; }
+.gcard-row .mp-cell { text-align: left; padding: 4px 8px; min-height: 30px; }

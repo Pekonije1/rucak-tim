@@ -6,15 +6,29 @@ import './mealpicker.css';
 // "pileci cevapi" nalazi "Pileći ćevapi"
 const norm = (s) => s.toLowerCase().replace(/đ/g, 'dj').normalize('NFD').replace(/[̀-ͯ]/g, '');
 
-export default function MealPicker({ value, label, menu, onChange }) {
+export default function MealPicker({ value, label, menu, onChange, compact = false, placeholder = 'Izaberi jelo' }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const ref = useRef(null);
   const inputRef = useRef(null);
+  const btnRef = useRef(null);
+  const [pos, setPos] = useState(null);
 
   useEffect(() => {
     if (!open) return;
     setQ('');
+    if (compact && window.innerWidth >= 640 && btnRef.current) {
+      const r = btnRef.current.getBoundingClientRect();
+      const width = Math.max(r.width, 280);
+      const left = Math.min(r.left, window.innerWidth - width - 8);
+      const below = window.innerHeight - r.bottom > 360;
+      setPos(below ? { top: r.bottom + 6, left, width } : { bottom: window.innerHeight - r.top + 6, left, width });
+    } else {
+      setPos(null);
+    }
+    const onScroll = (e) => { if (compact && !ref.current?.contains(e.target)) setOpen(false); };
+    window.addEventListener('scroll', onScroll, true);
+    window.addEventListener('resize', onScroll);
     const t = setTimeout(() => inputRef.current?.focus(), 30);
     const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false); };
@@ -26,8 +40,10 @@ export default function MealPicker({ value, label, menu, onChange }) {
       document.removeEventListener('mousedown', onDoc);
       document.removeEventListener('touchstart', onDoc);
       document.removeEventListener('keydown', onKey);
+      window.removeEventListener('scroll', onScroll, true);
+      window.removeEventListener('resize', onScroll);
     };
-  }, [open]);
+  }, [open, compact]);
 
   const list = useMemo(() => {
     const words = norm(q.trim()).split(/\s+/).filter(Boolean);
@@ -41,19 +57,25 @@ export default function MealPicker({ value, label, menu, onChange }) {
   function pick(id) {
     onChange(id);
     setOpen(false);
+    setTimeout(() => btnRef.current?.focus(), 0);
   }
 
   return (
-    <div className="mp" ref={ref}>
-      <button type="button" className={'input mp-btn' + (label ? ' mp-set' : '')} onClick={() => setOpen((o) => !o)}>
-        <span>{label || 'Izaberi jelo'}</span>
-        <span className="mp-caret">▾</span>
+    <div className={'mp' + (compact ? ' mp-compact' : '')} ref={ref}>
+      <button
+        ref={btnRef}
+        type="button"
+        className={(compact ? 'mp-cell' : 'input mp-btn') + (label ? ' mp-set' : '')}
+        onClick={() => setOpen((o) => !o)}
+      >
+        <span>{label || placeholder}</span>
+        {!compact && <span className="mp-caret">▾</span>}
       </button>
 
       {open && (
         <>
           <div className="mp-backdrop" onClick={() => setOpen(false)} />
-          <div className="mp-pop" role="dialog">
+          <div className={'mp-pop' + (pos ? ' mp-fixed' : '')} role="dialog" style={pos ? { ...pos, right: 'auto' } : undefined}>
             <input
               ref={inputRef}
               className="input mp-search"

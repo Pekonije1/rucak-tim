@@ -2,14 +2,51 @@
 
 import { useEffect, useState } from 'react';
 import { fmtDate, toISO, weekDays } from '@/lib/dates';
+import MealPicker from './MealPicker';
+import { MEAL_PRICE } from '@/lib/config';
 import './grid.css';
 
 const eur = (n) => (Math.round((n || 0) * 100) / 100).toFixed(2).replace('.', ',') + ' €';
 const label = (l) => (l.qty > 1 ? `${l.name} x${l.qty}` : l.name);
 
-export default function Grid({ week, orders }) {
+export default function Grid({ week, orders, menu = [], editable = false, onEdit }) {
   const [users, setUsers] = useState([]);
   const [copied, setCopied] = useState(false);
+  const [err, setErr] = useState('');
+
+  async function setCell(n, date, itemId) {
+    const days = { ...(orders?.[n]?.days || {}) };
+    if (itemId) {
+      const item = menu.find((m) => m.id === itemId);
+      if (!item) return;
+      days[date] = [{ itemId: item.id, name: item.name, price: MEAL_PRICE, qty: 1 }];
+    } else {
+      delete days[date];
+    }
+    setErr('');
+    onEdit?.(n, days);
+    try {
+      const res = await fetch('/api/orders', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ week, user: n, days }),
+      });
+      if (!res.ok) throw new Error();
+    } catch {
+      setErr(`Nije sačuvano za ${n}, pokušaj ponovo.`);
+    }
+  }
+
+  const editCell = (n, date, lines) => (
+    <MealPicker
+      compact
+      value={lines[0]?.itemId || ''}
+      label={lines[0]?.name}
+      placeholder="–"
+      menu={menu}
+      onChange={(id) => setCell(n, date, id)}
+    />
+  );
 
   useEffect(() => {
     fetch('/api/users', { cache: 'no-store' })
@@ -43,10 +80,11 @@ export default function Grid({ week, orders }) {
   return (
     <div className="card grid-card">
       <div className="day-head">
-        <h3>Tabela nedelje</h3>
+        <h3>Tabela nedelje{editable && <span className="muted small" style={{ fontWeight: 500 }}> · admin: klikni ćeliju da promijeniš</span>}</h3>
         <button className="btn sm" onClick={copyTable}>{copied ? 'Kopirano ✓' : 'Kopiraj tabelu'}</button>
       </div>
 
+      {err && <p className="error">{err}</p>}
       <div className="grid-scroll">
         <table className="gtable">
           <thead>
@@ -65,8 +103,10 @@ export default function Grid({ week, orders }) {
                 {days.map((d) => {
                   const lines = cell(n, d.date);
                   return (
-                    <td key={d.date} className={d.date === today ? 'gtoday' : ''}>
-                      {lines.length ? lines.map((l, i) => <div key={i}>{label(l)}</div>) : <span className="gempty">–</span>}
+                    <td key={d.date} className={(d.date === today ? 'gtoday' : '') + (editable ? ' gedit' : '')}>
+                      {editable
+                        ? editCell(n, d.date, lines)
+                        : lines.length ? lines.map((l, i) => <div key={i}>{label(l)}</div>) : <span className="gempty">–</span>}
                     </td>
                   );
                 })}
@@ -89,7 +129,9 @@ export default function Grid({ week, orders }) {
               return (
                 <div key={d.date} className={'gcard-row' + (d.date === today ? ' gtoday' : '')}>
                   <span className="gday">{d.name.slice(0, 3)}</span>
-                  <span className={lines.length ? '' : 'gempty'}>{lines.length ? lines.map(label).join(', ') : '–'}</span>
+                  {editable
+                    ? <div className="grow">{editCell(n, d.date, lines)}</div>
+                    : <span className={lines.length ? '' : 'gempty'}>{lines.length ? lines.map(label).join(', ') : '–'}</span>}
                 </div>
               );
             })}
