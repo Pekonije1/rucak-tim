@@ -8,7 +8,7 @@ import Grid from './Grid';
 import MealPicker from './MealPicker';
 import Fame from './Fame';
 import { THEMES, applyTheme, readTheme } from '@/lib/theme';
-import { MEAL_PRICE } from '@/lib/config';
+import { ADMIN, MEAL_PRICE } from '@/lib/config';
 import { downloadWeekXlsx } from '@/lib/excel';
 
 const LS_KEY = 'rucak_user';
@@ -19,7 +19,7 @@ const count = (lines) => lines.reduce((s, l) => s + l.qty, 0);
 async function api(path, opts = {}) {
   const res = await fetch(path, {
     ...opts,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
     cache: 'no-store',
   });
   const data = await res.json().catch(() => ({}));
@@ -592,6 +592,8 @@ function ProfileTab({ user, onLogout, theme, onTheme }) {
         )}
       </div>
 
+      {user === ADMIN && <UsersAdmin me={user} />}
+
       <div className="card">
         <h3>Tema</h3>
         <div className="seg">
@@ -605,5 +607,62 @@ function ProfileTab({ user, onLogout, theme, onTheme }) {
 
       <button className="btn full" onClick={onLogout}>Promijeni korisnika</button>
     </section>
+  );
+}
+
+function UsersAdmin({ me }) {
+  const [users, setUsers] = useState([]);
+  const [name, setName] = useState('');
+  const [err, setErr] = useState('');
+
+  const load = useCallback(() => {
+    api('/api/users').then((d) => setUsers(d.users)).catch(() => {});
+  }, []);
+  useEffect(load, [load]);
+
+  async function add(e) {
+    e.preventDefault();
+    setErr('');
+    if (!name.trim()) return;
+    try {
+      await api('/api/users', { method: 'POST', body: JSON.stringify({ name }) });
+      setName('');
+      load();
+    } catch (e2) {
+      setErr(e2.message);
+    }
+  }
+
+  async function remove(u) {
+    if (!confirm(`Obrisati korisnika "${u}" i sve njegove porudžbine?`)) return;
+    setErr('');
+    try {
+      await api(`/api/users?name=${encodeURIComponent(u)}`, { method: 'DELETE', headers: { 'x-user': me } });
+      load();
+    } catch (e2) {
+      setErr(e2.message);
+    }
+  }
+
+  return (
+    <div className="card">
+      <h3>👑 Korisnici</h3>
+      <p className="muted small">Samo ti vidiš ovo. Brisanje uklanja i sve porudžbine tog korisnika.</p>
+      <form className="addform" onSubmit={add}>
+        <input className="input" placeholder="Ime novog korisnika" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
+        <button className="btn primary">Dodaj</button>
+      </form>
+      {err && <p className="error">{err}</p>}
+      <div className="list">
+        {users.map((u) => (
+          <div key={u} className="row">
+            <span className="grow">{u}</span>
+            {u !== me && (
+              <button className="btn sm danger" onClick={() => remove(u)} aria-label={`Obriši ${u}`}>✕</button>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
