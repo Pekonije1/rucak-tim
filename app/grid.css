@@ -21,43 +21,51 @@
 }
 .gtable tr > *:last-child { border-right: none; }
 .gtable tbody tr:last-child > * { border-bottom: none; }
-.gtable tbody tr:hover td { background: color-mix(in srgb, var(--bg) 70%, transparent); }
 
-/* Zaglavlje: svijetlo i mirno, kao ostatak aplikacije */
+/* Okvir (zaglavlje, imena, iznos) je jasno odvojen od jela */
+.gtable td { background: var(--card); }
 .gtable thead th {
-  background: var(--bg);
-  color: var(--muted);
-  font-weight: 600;
+  background: var(--frame);
+  color: var(--frame-text);
+  font-weight: 700;
   font-size: 0.76rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid var(--border-strong);
+  border-right-color: var(--frame-line);
+  border-bottom: 2px solid var(--frame-line);
 }
-.gtable thead th span { display: block; font-weight: 500; font-size: 0.72rem; text-transform: none; letter-spacing: 0; opacity: 0.8; margin-top: 1px; }
+.gtable thead th span { display: block; font-weight: 500; font-size: 0.72rem; text-transform: none; letter-spacing: 0; color: var(--muted); margin-top: 1px; }
 
-/* Kolona sa imenima */
 .gtable .gname {
   position: sticky;
   left: 0;
   z-index: 1;
-  background: var(--card);
+  background: var(--frame);
   color: var(--text);
-  font-weight: 650;
+  font-weight: 700;
   white-space: nowrap;
-  min-width: 104px;
+  min-width: 108px;
   text-align: left;
-  box-shadow: inset -1px 0 0 var(--border-strong);
+  padding-left: 12px;
+  border-right: 2px solid var(--frame-line);
+  border-bottom-color: var(--frame-line);
 }
-.gtable thead .gcorner { z-index: 2; background: var(--bg); }
+.gtable thead .gcorner { z-index: 2; background: var(--frame); border-right: 2px solid var(--frame-line); }
 .gtable td div + div { margin-top: 4px; }
-.gtable .gsum { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.gtable thead .gsum { color: var(--text); }
+.gtable .gsum {
+  font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums;
+  background: var(--frame); color: var(--text);
+  border-left: 2px solid var(--frame-line);
+  border-bottom-color: var(--frame-line);
+}
+.gtable thead .gsum { color: var(--frame-text); }
+.gtable tbody tr:hover td:not(.gsum) { background: color-mix(in srgb, var(--frame) 45%, var(--card)); }
 .gempty { color: var(--muted); opacity: 0.5; }
 
-/* Današnji dan: samo blago istaknut */
-.gtable thead th.gtoday { background: var(--accent-soft); color: var(--accent-ink); box-shadow: inset 0 -2px 0 var(--accent); }
-.gtable thead th.gtoday span { font-weight: 700; opacity: 1; text-transform: uppercase; letter-spacing: 0.05em; }
-.gtable td.gtoday { background: color-mix(in srgb, var(--accent-soft) 60%, var(--card)); }
+/* Današnji dan */
+.gtable thead th.gtoday { background: var(--accent-soft); color: var(--accent-ink); box-shadow: inset 0 -2px 0 var(--accent); border-bottom-color: var(--accent); }
+.gtable thead th.gtoday span { font-weight: 700; color: var(--accent-ink); text-transform: uppercase; letter-spacing: 0.05em; }
+.gtable td.gtoday { background: color-mix(in srgb, var(--accent-soft) 55%, var(--card)); }
 .gtable tbody tr:hover td.gtoday { background: var(--accent-soft); }
 
 /* Telefon: kartice po osobi */
@@ -71,7 +79,7 @@
 }
 .gcard-head {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 9px 12px; background: var(--bg); color: var(--text); border-bottom: 1px solid var(--border);
+  padding: 9px 12px; background: var(--frame); color: var(--text); border-bottom: 2px solid var(--frame-line); font-weight: 700;
 }
 .gcard-row { display: flex; gap: 10px; padding: 7px 12px; border-top: 1px solid var(--border); align-items: center; }
 .gcard-row:first-of-type { border-top: none; }
