@@ -31,66 +31,72 @@ async function api(path, opts = {}) {
 export default function Home() {
   const [user, setUser] = useState(null);
   const [ready, setReady] = useState(false);
-
   const [startWeek, setStartWeek] = useState(null);
+  const [preselect, setPreselect] = useState('');
 
   useEffect(() => {
-    try {
-      const qs = new URLSearchParams(window.location.search);
-      const qu = qs.get('u');
-      const qw = qs.get('w');
-      if (qu) localStorage.setItem(LS_KEY, qu);
-      if (qw && /^\d{4}-\d{2}-\d{2}$/.test(qw)) setStartWeek(qw);
-      if (qu || qw) window.history.replaceState(null, '', window.location.pathname);
-      const u = localStorage.getItem(LS_KEY);
-      if (u) setUser(u);
-    } catch {}
-    setReady(true);
+    const qs = new URLSearchParams(window.location.search);
+    const qu = qs.get('u');
+    const qw = qs.get('w');
+    if (qu) setPreselect(qu);
+    if (qw && /^\d{4}-\d{2}-\d{2}$/.test(qw)) setStartWeek(qw);
+    if (qu || qw) window.history.replaceState(null, '', window.location.pathname);
+    try { localStorage.removeItem(LS_KEY); } catch {}
+    api('/api/auth')
+      .then((d) => {
+        // Link iz mejla za drugog korisnika: traži prijavu kao on
+        if (d.user && (!qu || qu === d.user)) setUser(d.user);
+      })
+      .catch(() => {})
+      .finally(() => setReady(true));
   }, []);
 
   if (!ready) return null;
-  if (!user) {
-    return (
-      <Login
-        onLogin={(u) => {
-          try { localStorage.setItem(LS_KEY, u); } catch {}
-          setUser(u);
-        }}
-      />
-    );
-  }
+  if (!user) return <Login preselect={preselect} onLogin={setUser} />;
   return (
     <App
       user={user}
       startWeek={startWeek}
-      onLogout={() => {
-        try { localStorage.removeItem(LS_KEY); } catch {}
+      onLogout={async () => {
+        await api('/api/auth', { method: 'DELETE' }).catch(() => {});
         setUser(null);
       }}
     />
   );
 }
 
-
-function Login({ onLogin }) {
-  const [name, setName] = useState('');
+function Login({ onLogin, preselect }) {
   const [users, setUsers] = useState([]);
+  const [withPin, setWithPin] = useState([]);
+  const [name, setName] = useState('');
+  const [pin, setPin] = useState('');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
+  const pinRef = useRef(null);
 
   useEffect(() => {
-    api('/api/users').then((d) => setUsers(d.users)).catch(() => {});
-  }, []);
+    api('/api/users').then((d) => {
+      setUsers(d.users);
+      setWithPin(d.withPin || []);
+      if (preselect && d.users.includes(preselect)) setName(preselect);
+    }).catch(() => {});
+  }, [preselect]);
 
-  async function submit(n) {
-    const value = (n ?? name).trim();
-    if (!value) return setErr('Unesi ime');
+  useEffect(() => { if (name) setTimeout(() => pinRef.current?.focus(), 30); }, [name]);
+
+  const firstTime = name && !withPin.includes(name);
+
+  async function submit(e) {
+    e.preventDefault();
+    setErr('');
+    if (!/^\d{4,6}$/.test(pin)) return setErr('PIN mora imati 4 do 6 cifara');
     setBusy(true);
     try {
-      const d = await api('/api/users', { method: 'POST', body: JSON.stringify({ name: value }) });
-      onLogin(d.name);
-    } catch (e) {
-      setErr(e.message);
+      const d = await api('/api/auth', { method: 'POST', body: JSON.stringify({ name, pin }) });
+      onLogin(d.user);
+    } catch (e2) {
+      setErr(e2.message);
+      setPin('');
       setBusy(false);
     }
   }
@@ -100,28 +106,37 @@ function Login({ onLogin }) {
       <div className="card login-card">
         <div className="logo">🍽️</div>
         <h1>Ručak</h1>
-        <p className="muted">Unesi ime da počneš. Zapamtiće te na ovom uređaju.</p>
-        <form onSubmit={(e) => { e.preventDefault(); submit(); }}>
-          <input
-            className="input"
-            placeholder="npr. Peko"
-            value={name}
-            onChange={(e) => { setName(e.target.value); setErr(''); }}
-            autoFocus
-            maxLength={40}
-          />
-          {err && <p className="error">{err}</p>}
-          <button className="btn primary full" disabled={busy}>Uđi</button>
-        </form>
-        {users.length > 0 && (
+        {!name ? (
           <>
-            <p className="muted small">Ili izaberi svoje ime:</p>
-            <div className="chips">
+            <p className="muted">Ko si ti?</p>
+            <div className="chips" style={{ marginTop: 14 }}>
               {users.map((u) => (
-                <button key={u} className="chip" onClick={() => submit(u)} disabled={busy}>{u}</button>
+                <button key={u} className="chip" onClick={() => { setName(u); setPin(''); setErr(''); }}>{u}</button>
               ))}
             </div>
+            <p className="muted small" style={{ marginTop: 16 }}>Nema te na listi? Javi se adminu.</p>
           </>
+        ) : (
+          <form onSubmit={submit}>
+            <p className="muted">
+              {firstTime ? <>Ćao <strong>{name}</strong>, prvi put si ovdje. Izmisli PIN od 4 do 6 cifara.</> : <>Ćao <strong>{name}</strong>, unesi svoj PIN.</>}
+            </p>
+            <input
+              ref={pinRef}
+              className="input pin-input"
+              type="password"
+              inputMode="numeric"
+              autoComplete={firstTime ? 'new-password' : 'current-password'}
+              pattern="\d*"
+              maxLength={6}
+              placeholder="••••"
+              value={pin}
+              onChange={(e) => { setPin(e.target.value.replace(/\D/g, '')); setErr(''); }}
+            />
+            {err && <p className="error">{err}</p>}
+            <button className="btn primary full" disabled={busy}>{firstTime ? 'Postavi PIN i uđi' : 'Uđi'}</button>
+            <button type="button" className="btn full" onClick={() => { setName(''); setPin(''); setErr(''); }}>Nisam {name}</button>
+          </form>
         )}
       </div>
     </main>
@@ -632,7 +647,7 @@ function ProfileTab({ user, onLogout, theme, onTheme }) {
         </div>
       </div>
 
-      <button className="btn full" onClick={onLogout}>Promijeni korisnika</button>
+      <button className="btn full" onClick={onLogout}>Odjavi se</button>
     </section>
   );
 }
@@ -647,7 +662,7 @@ function UsersAdmin({ me }) {
 
   const load = useCallback(() => {
     api('/api/users').then((d) => setUsers(d.users)).catch(() => {});
-    api('/api/email', { headers: { 'x-user': me } }).then((d) => { setEmails(d.emails); setDraft(d.emails); }).catch(() => {});
+    api('/api/email').then((d) => { setEmails(d.emails); setDraft(d.emails); }).catch(() => {});
   }, [me]);
 
   async function saveEmail(u) {
@@ -666,14 +681,35 @@ function UsersAdmin({ me }) {
   }
   useEffect(load, [load]);
 
+  const [newPin, setNewPin] = useState('');
+  const [newEmail, setNewEmail] = useState('');
+  const mailNote = (d) => (d.mailed ? ` PIN poslat na ${d.to} 📧` : d.mailError ? ` Mejl nije poslat: ${d.mailError}` : '');
+
   async function add(e) {
     e.preventDefault();
     setErr('');
+    setOk('');
     if (!name.trim()) return;
     try {
-      await api('/api/users', { method: 'POST', body: JSON.stringify({ name }) });
+      const d = await api('/api/users', { method: 'POST', body: JSON.stringify({ name, pin: newPin || undefined, email: newEmail || undefined }) });
+      setOk((newPin ? `Dodat ${d.name} sa PIN-om ${newPin} ✓` : `Dodat ${d.name} ✓ PIN postavlja sam pri prvoj prijavi.`) + mailNote(d));
       setName('');
+      setNewPin('');
+      setNewEmail('');
       load();
+    } catch (e2) {
+      setErr(e2.message);
+    }
+  }
+
+  async function resetPin(u) {
+    const p = prompt(`Novi PIN za ${u} (4 do 6 cifara). Ostavi prazno da ga ${u} sam postavi pri sledećoj prijavi.`, '');
+    if (p === null) return;
+    setErr('');
+    setOk('');
+    try {
+      const d = await api('/api/users', { method: 'PATCH', body: JSON.stringify({ name: u, pin: p.trim() || undefined }) });
+      setOk((p.trim() ? `PIN za ${u} je sada ${p.trim()} ✓` : `${u} postavlja novi PIN pri sledećoj prijavi ✓`) + mailNote(d));
     } catch (e2) {
       setErr(e2.message);
     }
@@ -683,7 +719,7 @@ function UsersAdmin({ me }) {
     if (!confirm(`Obrisati korisnika "${u}" i sve njegove porudžbine?`)) return;
     setErr('');
     try {
-      await api(`/api/users?name=${encodeURIComponent(u)}`, { method: 'DELETE', headers: { 'x-user': me } });
+      await api(`/api/users?name=${encodeURIComponent(u)}`, { method: 'DELETE' });
       load();
     } catch (e2) {
       setErr(e2.message);
@@ -696,6 +732,8 @@ function UsersAdmin({ me }) {
       <p className="muted small">Vide samo admini (Peko i Tami). Email se čuva kad izađeš iz polja ili pritisneš Enter. Brisanje uklanja i sve porudžbine tog korisnika.</p>
       <form className="addform" onSubmit={add}>
         <input className="input" placeholder="Ime novog korisnika" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
+        <input className="input price" placeholder="PIN (opciono)" inputMode="numeric" maxLength={6} value={newPin} onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ''))} />
+        <input className="input" style={{ flex: '1 1 200px' }} type="email" inputMode="email" placeholder="email (opciono, PIN stiže na njega)" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
         <button className="btn primary">Dodaj</button>
       </form>
       {err && <p className="error">{err}</p>}
@@ -714,6 +752,7 @@ function UsersAdmin({ me }) {
               onBlur={() => saveEmail(u)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } }}
             />
+            <button className="btn sm" onClick={() => resetPin(u)} title="Resetuj PIN" aria-label={`Resetuj PIN za ${u}`}>🔑</button>
             {!isAdmin(u) && (
               <button className="btn sm danger" onClick={() => remove(u)} aria-label={`Obriši ${u}`}>✕</button>
             )}
@@ -751,7 +790,7 @@ function EmailCard({ user }) {
     setBusy(true);
     setMsg('');
     try {
-      const d = await api('/api/cron/reminder?test=1', { headers: { 'x-user': user } });
+      const d = await api('/api/cron/reminder?test=1');
       setMsg(d.sent?.length ? `Poslato na ${saved} ✓` : d.failed?.[0]?.error || d.note || 'Ništa nije poslato');
     } catch (e2) {
       setMsg(e2.message);
@@ -788,7 +827,7 @@ function SendReminder({ me }) {
     setBusy(true);
     setResult(null);
     try {
-      const d = await api('/api/remind', { method: 'POST', headers: { 'x-user': me }, body: JSON.stringify({ message, mode }) });
+      const d = await api('/api/remind', { method: 'POST', body: JSON.stringify({ message, mode }) });
       setResult(d);
       if (d.sent?.length) setMessage('');
     } catch (e) {

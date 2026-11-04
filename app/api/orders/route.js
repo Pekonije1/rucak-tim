@@ -2,10 +2,12 @@ import { store } from '@/lib/db';
 import { seedOnce } from '@/lib/seed';
 import { WEEK_RE, weekDays } from '@/lib/dates';
 import { MEAL_PRICE } from '@/lib/config';
+import { forbidden, getSession, unauthorized } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req) {
+  if (!(await getSession(req))) return unauthorized();
   await seedOnce();
   const week = new URL(req.url).searchParams.get('week');
   if (!WEEK_RE.test(week || '')) return Response.json({ error: 'Neispravna nedelja' }, { status: 400 });
@@ -18,6 +20,9 @@ export async function PUT(req) {
   if (!WEEK_RE.test(week || '')) return Response.json({ error: 'Neispravna nedelja' }, { status: 400 });
   const name = String(user || '').trim();
   if (!name) return Response.json({ error: 'Nedostaje ime' }, { status: 400 });
+  const s = await getSession(req);
+  if (!s) return unauthorized();
+  if (s.name !== name && !s.admin) return forbidden('Možeš mijenjati samo svoje porudžbine');
 
   const allowed = new Set(weekDays(week).map((d) => d.date));
   const clean = {};
@@ -35,7 +40,6 @@ export async function PUT(req) {
     if (ok.length) clean[date] = ok;
   }
 
-  await store.sadd('users', name);
   if (Object.keys(clean).length === 0) {
     await store.hdel(`week:${week}`, name);
   } else {

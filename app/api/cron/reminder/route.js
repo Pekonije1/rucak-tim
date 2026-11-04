@@ -1,4 +1,4 @@
-import { isAdmin } from '@/lib/config';
+import { getSession } from '@/lib/auth';
 import { runReminders } from '@/lib/remind';
 
 export const dynamic = 'force-dynamic';
@@ -7,9 +7,10 @@ export const dynamic = 'force-dynamic';
 // ?test=1 sa x-user: <admin> šalje probni mejl samo tom adminu.
 export async function GET(req) {
   const test = new URL(req.url).searchParams.get('test') === '1';
-  const tester = req.headers.get('x-user');
+  const session = test ? await getSession(req) : null;
+  const tester = session?.name;
   const isCron = !!process.env.CRON_SECRET && req.headers.get('authorization') === `Bearer ${process.env.CRON_SECRET}`;
-  const isAdminTest = test && isAdmin(tester);
+  const isAdminTest = test && !!session?.admin;
   if (!isCron && !isAdminTest) return Response.json({ error: 'Nije dozvoljeno' }, { status: 401 });
 
   const result = await runReminders(isAdminTest ? { mode: 'self', requester: tester } : { mode: 'missing' });

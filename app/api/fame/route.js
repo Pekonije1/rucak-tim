@@ -1,10 +1,13 @@
 import { store } from '@/lib/db';
 import { MONTH_RE, mondaysForMonth } from '@/lib/dates';
 
+import { getSession, unauthorized } from '@/lib/auth';
+
 export const dynamic = 'force-dynamic';
 
 // Sva jela po osobi za mjesec, plus dani kad je bilo koga porudžbina
 export async function GET(req) {
+  if (!(await getSession(req))) return unauthorized();
   const month = new URL(req.url).searchParams.get('month');
   if (!MONTH_RE.test(month || '')) return Response.json({ error: 'Neispravan mjesec' }, { status: 400 });
 

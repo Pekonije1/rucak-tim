@@ -377,3 +377,6 @@ textarea.input { line-height: 1.45; }
   .content { max-width: 1280px; }
   .topbar { padding-left: 28px; padding-right: 28px; }
 }
+
+.pin-input { text-align: center; font-size: 1.6rem; letter-spacing: 0.5em; text-indent: 0.5em; margin-top: 8px; }
+.login-card form .btn.full + .btn.full { margin-top: 8px; }
