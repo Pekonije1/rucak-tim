@@ -1,19 +1,19 @@
-.grid-card { padding: 16px; }
+.grid-card { padding: 14px; }
 .grid-scroll {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
 }
 .gtable {
   width: 100%;
   min-width: 760px;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 0.92rem;
+  font-size: 0.9rem;
 }
 .gtable th, .gtable td {
-  padding: 10px 8px;
+  padding: 9px 8px;
   text-align: center;
   vertical-align: middle;
   border-right: 1px solid var(--border);
@@ -21,51 +21,77 @@
 }
 .gtable tr > *:last-child { border-right: none; }
 .gtable tbody tr:last-child > * { border-bottom: none; }
+.gtable tbody tr:hover td { background: color-mix(in srgb, var(--bg) 70%, transparent); }
+
+/* Zaglavlje: grafit, svaki dan sa svojom bojom ispod */
 .gtable thead th {
-  background: #e8955a;
-  color: #fff;
-  font-weight: 700;
-  font-size: 0.95rem;
+  background: var(--ink);
+  color: var(--on-ink);
+  font-weight: 650;
+  font-size: 0.86rem;
+  letter-spacing: -0.01em;
+  border-right-color: color-mix(in srgb, var(--on-ink) 14%, transparent);
+  box-shadow: inset 0 -3px 0 var(--day, transparent);
 }
-.gtable thead th span { display: block; font-weight: 500; font-size: 0.75rem; opacity: 0.85; }
+.gtable thead th span { display: block; font-weight: 500; font-size: 0.72rem; opacity: 0.7; }
+
+/* Kolona sa imenima: grafit sa zlatnim imenima */
 .gtable .gname {
   position: sticky;
   left: 0;
   z-index: 1;
-  background: #1f3fa8;
-  color: #fff;
-  font-weight: 700;
+  background: var(--ink);
+  color: var(--gold);
+  font-weight: 650;
   white-space: nowrap;
-  min-width: 110px;
+  min-width: 104px;
+  text-align: left;
+  border-right-color: color-mix(in srgb, var(--on-ink) 14%, transparent);
+  border-bottom-color: color-mix(in srgb, var(--on-ink) 10%, transparent);
 }
-.gtable thead .gcorner { z-index: 2; background: var(--card); }
+.gtable thead .gcorner { z-index: 2; box-shadow: none; }
 .gtable td div + div { margin-top: 4px; }
-.gtable .gsum { font-weight: 700; white-space: nowrap; }
-.gtable thead .gsum { background: #c96f35; }
-.gempty { color: var(--muted); }
+.gtable .gsum { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.gtable thead .gsum { background: var(--accent); color: #fff; box-shadow: none; }
+.gempty { color: var(--muted); opacity: 0.6; }
 
+/* Današnji dan */
+.gtable thead th.gtoday { background: var(--today); color: #fff; box-shadow: none; }
+.gtable thead th.gtoday span { font-weight: 800; opacity: 1; text-transform: uppercase; letter-spacing: 0.06em; }
+.gtable td.gtoday { background: var(--today-soft); color: var(--today-ink); font-weight: 650; }
+.gtable tbody tr:hover td.gtoday { background: var(--today-soft); }
+
+/* Telefon: kartice po osobi */
 .gcards { display: none; }
 .gcard {
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
-  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 0;
+  background: var(--card);
+  overflow: hidden;
 }
-.gcard-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
-.gcard-row { display: flex; gap: 10px; padding: 7px 0; border-top: 1px solid var(--border); }
-.gday { width: 34px; flex-shrink: 0; color: var(--muted); font-size: 0.85rem; font-weight: 600; padding-top: 1px; }
+.gcard-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 12px; background: var(--ink); color: var(--gold);
+}
+.gcard-head .pill { background: color-mix(in srgb, var(--on-ink) 14%, transparent); color: var(--on-ink); }
+.gcard-row { display: flex; gap: 10px; padding: 7px 12px; border-top: 1px solid var(--border); align-items: center; }
+.gcard-row:first-of-type { border-top: none; }
+.gday {
+  width: 38px; flex-shrink: 0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+  color: var(--day-ink, var(--muted));
+}
+.gcard-row.gtoday { background: var(--today-soft); font-weight: 650; color: var(--today-ink); box-shadow: inset 3px 0 0 var(--today); }
+.gcard-row.gtoday .gday { color: var(--today); }
+
+.gtable td.gedit { padding: 3px; }
+.gcard-row .mp-cell { text-align: left; padding: 4px 8px; min-height: 30px; }
 
 @media (max-width: 639px) {
   .grid-scroll { display: none; }
-  .gcards { display: grid; gap: 10px; }
+  .gcards { display: grid; gap: 8px; }
 }
-
-/* Današnji dan */
-.gtable thead th.gtoday { background: var(--accent); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.25); }
-.gtable thead th.gtoday span { font-weight: 800; opacity: 1; text-transform: uppercase; letter-spacing: 0.05em; }
-.gtable td.gtoday { background: var(--accent-soft); font-weight: 700; }
-.gcard-row.gtoday { background: var(--accent-soft); border-radius: 8px; padding-left: 8px; padding-right: 8px; font-weight: 700; }
-.gcard-row.gtoday .gday { color: var(--accent); }
-
-.gtable td.gedit { padding: 4px; }
-.gcard-row .mp-cell { text-align: left; padding: 4px 8px; min-height: 30px; }
+@media (min-width: 640px) and (max-width: 959px) {
+  .gtable { font-size: 0.84rem; }
+  .gtable th, .gtable td { padding: 8px 6px; }
+}

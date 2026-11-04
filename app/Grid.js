@@ -63,8 +63,8 @@ export default function Grid({ week, orders, menu = [], editable = false, onEdit
     Object.values(orders?.[n]?.days || {}).flat().reduce((s, l) => s + l.qty * l.price, 0);
 
   async function copyTable() {
-    const head = ['', ...days.map((d) => d.name)].join('\t');
-    const rows = names.map((n) => [n, ...days.map((d) => cell(n, d.date).map(label).join(', '))].join('\t'));
+    const head = ['', ...days.map((d, i) => d.name)].join('\t');
+    const rows = names.map((n) => [n, ...days.map((d, i) => cell(n, d.date).map(label).join(', '))].join('\t'));
     const text = [head, ...rows].join('\n');
     try {
       await navigator.clipboard.writeText(text);
@@ -90,8 +90,8 @@ export default function Grid({ week, orders, menu = [], editable = false, onEdit
           <thead>
             <tr>
               <th className="gname gcorner"></th>
-              {days.map((d) => (
-                <th key={d.date} className={d.date === today ? 'gtoday' : ''}>{d.name}<span>{d.date === today ? 'Danas' : fmtDate(d.date)}</span></th>
+              {days.map((d, i) => (
+                <th key={d.date} data-dow={i} className={d.date === today ? 'gtoday' : ''}>{d.name}<span>{d.date === today ? 'Danas' : fmtDate(d.date)}</span></th>
               ))}
               <th className="gsum">Iznos</th>
             </tr>
@@ -100,7 +100,7 @@ export default function Grid({ week, orders, menu = [], editable = false, onEdit
             {names.map((n) => (
               <tr key={n}>
                 <th className="gname">{n}</th>
-                {days.map((d) => {
+                {days.map((d, i) => {
                   const lines = cell(n, d.date);
                   return (
                     <td key={d.date} className={(d.date === today ? 'gtoday' : '') + (editable ? ' gedit' : '')}>
@@ -124,10 +124,10 @@ export default function Grid({ week, orders, menu = [], editable = false, onEdit
               <strong>{n}</strong>
               <span className="pill">{eur(total(n))}</span>
             </div>
-            {days.map((d) => {
+            {days.map((d, i) => {
               const lines = cell(n, d.date);
               return (
-                <div key={d.date} className={'gcard-row' + (d.date === today ? ' gtoday' : '')}>
+                <div key={d.date} data-dow={i} className={'gcard-row' + (d.date === today ? ' gtoday' : '')}>
                   <span className="gday">{d.name.slice(0, 3)}</span>
                   {editable
                     ? <div className="grow">{editCell(n, d.date, lines)}</div>

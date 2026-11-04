@@ -154,7 +154,7 @@ function App({ user, onLogout, startWeek }) {
   return (
     <div className="shell">
       <header className="topbar">
-        <div className="brand">🍽️ Ručak</div>
+        <div className="brand"><span className="brand-dots" aria-hidden="true"><i /><i /><i /><i /></span>Ručak <span className="brand-emoji">🍽️</span></div>
         <nav className="tabs-top">
           {TABS.map((t) => (
             <button key={t.id} className={'tab' + (tab === t.id ? ' active' : '')} onClick={() => setTab(t.id)}>
@@ -310,10 +310,10 @@ function WeekTab({ user, menu, week, setWeek, goMenu }) {
         <p className="muted center">Učitavam…</p>
       ) : (
         <div className="days">
-          {weekDays(week).map((d) => {
+          {weekDays(week).map((d, i) => {
             const line = days[d.date]?.[0];
             return (
-              <div key={d.date} className={'card day' + (d.date === todayISO() ? ' today' : '')}>
+              <div key={d.date} data-dow={i} className={'card day' + (d.date === todayISO() ? ' today' : '')}>
                 <div className="day-head">
                   <div>
                     <strong>{d.name}</strong> <span className="muted small">{fmtDate(d.date)}</span>
@@ -509,8 +509,8 @@ function OverviewTab({ week, setWeek, menu, user }) {
       ) : (
         <div className="grid2">
           <div className="days">
-            {byDay.map((d) => (
-              <div key={d.date} className={'card day' + (d.date === todayISO() ? ' today' : '')}>
+            {byDay.map((d, i) => (
+              <div key={d.date} data-dow={i} className={'card day' + (d.date === todayISO() ? ' today' : '')}>
                 <div className="day-head">
                   <div><strong>{d.name}</strong> <span className="muted small">{fmtDate(d.date)}</span>{d.date === todayISO() && <span className="today-badge">Danas</span>}</div>
                   {d.items.length > 0 && <span className="pill">{d.items.reduce((s, i) => s + i.qty, 0)} jela</span>}
