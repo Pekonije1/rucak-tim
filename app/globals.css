@@ -11,8 +11,23 @@
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
+:root { color-scheme: light; }
+
+/* Tamna tema: ručno izabrana, ili sistemska ako korisnik nije izabrao svijetlu */
+:root[data-theme="dark"] {
+  --bg: #141413;
+  --card: #1e1e1c;
+  --text: #f1efe9;
+  --muted: #a09d96;
+  --border: #2e2d2a;
+  --accent: #ff7a2f;
+  --accent-soft: #3a2416;
+  --danger: #ff6b6b;
+  --shadow: none;
+  color-scheme: dark;
+}
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #141413;
     --card: #1e1e1c;
     --text: #f1efe9;
@@ -22,6 +37,7 @@
     --accent-soft: #3a2416;
     --danger: #ff6b6b;
     --shadow: none;
+    color-scheme: dark;
   }
 }
 
@@ -239,3 +255,17 @@ p { margin: 0 0 8px; }
   .weekpicker { justify-content: flex-start; }
   .weeklabel { min-width: 180px; }
 }
+
+.theme-btn {
+  font: inherit; font-size: 1.05rem; line-height: 1;
+  width: 38px; height: 38px; flex-shrink: 0;
+  display: grid; place-items: center;
+  color: var(--text); background: var(--card);
+  border: 1px solid var(--border); border-radius: 999px; cursor: pointer;
+}
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; padding: 4px; background: var(--bg); border: 1px solid var(--border); border-radius: 12px; }
+.seg button {
+  font: inherit; font-weight: 600; font-size: 0.9rem; color: var(--muted);
+  background: none; border: none; border-radius: 9px; padding: 10px 6px; cursor: pointer;
+}
+.seg button.active { background: var(--card); color: var(--accent); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }

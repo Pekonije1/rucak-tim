@@ -7,6 +7,7 @@ import {
 import Grid from './Grid';
 import MealPicker from './MealPicker';
 import Fame from './Fame';
+import { THEMES, applyTheme, readTheme } from '@/lib/theme';
 import { MEAL_PRICE } from '@/lib/config';
 import { downloadWeekXlsx } from '@/lib/excel';
 
@@ -130,6 +131,10 @@ function App({ user, onLogout }) {
   const [tab, setTab] = useState('week');
   const [menu, setMenu] = useState([]);
   const [week, setWeek] = useState(() => toISO(mondayOf(new Date())));
+  const [theme, setTheme] = useState('system');
+  useEffect(() => setTheme(readTheme()), []);
+  const changeTheme = (t) => { applyTheme(t); setTheme(t); };
+  const themeIdx = Math.max(0, THEMES.findIndex((t) => t.id === theme));
 
   const loadMenu = useCallback(() => {
     api('/api/menu').then((d) => setMenu(d.items)).catch(() => {});
@@ -148,6 +153,14 @@ function App({ user, onLogout }) {
           ))}
         </nav>
         <div className="who">{user}</div>
+        <button
+          className="theme-btn"
+          onClick={() => changeTheme(THEMES[(themeIdx + 1) % THEMES.length].id)}
+          aria-label={`Tema: ${THEMES[themeIdx].label}`}
+          title={`Tema: ${THEMES[themeIdx].label}`}
+        >
+          {THEMES[themeIdx].icon}
+        </button>
       </header>
 
       <main className="content">
@@ -155,7 +168,7 @@ function App({ user, onLogout }) {
         {tab === 'menu' && <MenuTab menu={menu} reload={loadMenu} />}
         {tab === 'overview' && <OverviewTab week={week} setWeek={setWeek} />}
         {tab === 'fame' && <Fame />}
-        {tab === 'profile' && <ProfileTab user={user} onLogout={onLogout} />}
+        {tab === 'profile' && <ProfileTab user={user} onLogout={onLogout} theme={theme} onTheme={changeTheme} />}
       </main>
 
       <nav className="tabs-bottom">
@@ -536,7 +549,7 @@ function OverviewTab({ week, setWeek }) {
 }
 
 
-function ProfileTab({ user, onLogout }) {
+function ProfileTab({ user, onLogout, theme, onTheme }) {
   const [month, setMonth] = useState(currentMonth);
   const [stats, setStats] = useState(null);
 
@@ -577,6 +590,17 @@ function ProfileTab({ user, onLogout }) {
             </tbody>
           </table>
         )}
+      </div>
+
+      <div className="card">
+        <h3>Tema</h3>
+        <div className="seg">
+          {THEMES.map((t) => (
+            <button key={t.id} className={theme === t.id ? 'active' : ''} onClick={() => onTheme(t.id)}>
+              {t.icon} {t.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <button className="btn full" onClick={onLogout}>Promijeni korisnika</button>
