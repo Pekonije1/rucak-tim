@@ -1,5 +1,5 @@
 import { store } from '@/lib/db';
-import { ADMIN } from '@/lib/config';
+import { isAdmin } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +10,7 @@ export async function GET(req) {
   const emails = await store.hgetall('emails');
   if (!user) {
     // Svi mejlovi, samo za admina
-    if (req.headers.get('x-user') !== ADMIN) return Response.json({ error: 'Nije dozvoljeno' }, { status: 403 });
+    if (!isAdmin(req.headers.get('x-user'))) return Response.json({ error: 'Nije dozvoljeno' }, { status: 403 });
     return Response.json({ emails });
   }
   return Response.json({ email: emails[user] || '' });

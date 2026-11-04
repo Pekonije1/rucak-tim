@@ -8,7 +8,7 @@ import Grid from './Grid';
 import MealPicker from './MealPicker';
 import Fame from './Fame';
 import { THEMES, applyTheme, readTheme } from '@/lib/theme';
-import { ADMIN, MEAL_PRICE } from '@/lib/config';
+import { MEAL_PRICE, isAdmin } from '@/lib/config';
 import { downloadWeekXlsx } from '@/lib/excel';
 
 const LS_KEY = 'rucak_user';
@@ -605,7 +605,7 @@ function ProfileTab({ user, onLogout, theme, onTheme }) {
 
       <EmailCard user={user} />
 
-      {user === ADMIN && <UsersAdmin me={user} />}
+      {isAdmin(user) && <UsersAdmin me={user} />}
 
       <div className="card">
         <h3>Tema</h3>
@@ -679,7 +679,7 @@ function UsersAdmin({ me }) {
   return (
     <div className="card">
       <h3>👑 Korisnici</h3>
-      <p className="muted small">Samo ti vidiš ovo. Email se čuva kad izađeš iz polja ili pritisneš Enter. Brisanje uklanja i sve porudžbine tog korisnika.</p>
+      <p className="muted small">Vide samo admini (Peko i Tami). Email se čuva kad izađeš iz polja ili pritisneš Enter. Brisanje uklanja i sve porudžbine tog korisnika.</p>
       <form className="addform" onSubmit={add}>
         <input className="input" placeholder="Ime novog korisnika" value={name} onChange={(e) => setName(e.target.value)} maxLength={40} />
         <button className="btn primary">Dodaj</button>
@@ -700,7 +700,7 @@ function UsersAdmin({ me }) {
               onBlur={() => saveEmail(u)}
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.currentTarget.blur(); } }}
             />
-            {u !== me && (
+            {!isAdmin(u) && (
               <button className="btn sm danger" onClick={() => remove(u)} aria-label={`Obriši ${u}`}>✕</button>
             )}
           </div>
@@ -754,7 +754,7 @@ function EmailCard({ user }) {
         <input className="input" type="email" inputMode="email" placeholder="tvoj@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
         <button className="btn primary">Sačuvaj</button>
       </form>
-      {user === ADMIN && saved && (
+      {isAdmin(user) && saved && (
         <button className="btn full" onClick={test} disabled={busy}>{busy ? 'Šaljem…' : 'Pošalji mi probni mejl'}</button>
       )}
       {msg && <p className="muted small" style={{ marginTop: 8 }}>{msg}</p>}

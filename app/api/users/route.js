@@ -1,6 +1,6 @@
 import { store } from '@/lib/db';
 import { seedOnce } from '@/lib/seed';
-import { ADMIN } from '@/lib/config';
+import { isAdmin } from '@/lib/config';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,10 +24,10 @@ export async function POST(req) {
 
 // Brisanje korisnika i svih njegovih porudžbina (samo admin)
 export async function DELETE(req) {
-  if (req.headers.get('x-user') !== ADMIN) return Response.json({ error: 'Samo ' + ADMIN + ' može da briše korisnike' }, { status: 403 });
+  if (!isAdmin(req.headers.get('x-user'))) return Response.json({ error: 'Samo admin može da briše korisnike' }, { status: 403 });
   const name = new URL(req.url).searchParams.get('name');
   if (!name) return Response.json({ error: 'Nedostaje ime' }, { status: 400 });
-  if (name === ADMIN) return Response.json({ error: 'Ne možeš obrisati sebe' }, { status: 400 });
+  if (isAdmin(name)) return Response.json({ error: 'Admin se ne može obrisati' }, { status: 400 });
   await store.srem('users', name);
   const weeks = await store.keys('week:*');
   for (const k of weeks) await store.hdel(k, name);

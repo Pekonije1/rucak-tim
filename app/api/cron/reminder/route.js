@@ -1,6 +1,6 @@
 import nodemailer from 'nodemailer';
 import { store } from '@/lib/db';
-import { ADMIN } from '@/lib/config';
+import { isAdmin } from '@/lib/config';
 import { addDays, fmtDate, mondayOf, parseISO, toISO, weekDays } from '@/lib/dates';
 import { reminderHtml, reminderLink, reminderSubject } from '@/lib/email';
 
@@ -17,7 +17,8 @@ export async function GET(req) {
   const url = new URL(req.url);
   const test = url.searchParams.get('test') === '1';
   const isCron = req.headers.get('authorization') === `Bearer ${process.env.CRON_SECRET}`;
-  const isAdminTest = test && req.headers.get('x-user') === ADMIN;
+  const tester = req.headers.get('x-user');
+  const isAdminTest = test && isAdmin(tester);
   if (!process.env.CRON_SECRET || (!isCron && !isAdminTest)) {
     return Response.json({ error: 'Nije dozvoljeno' }, { status: 401 });
   }
@@ -36,7 +37,7 @@ export async function GET(req) {
   ]);
 
   const targets = test
-    ? (emails[ADMIN] ? [[ADMIN, emails[ADMIN]]] : [])
+    ? (emails[tester] ? [[tester, emails[tester]]] : [])
     : Object.entries(emails).filter(([name]) => !Object.keys(orders?.[name]?.days || {}).length);
 
   if (!targets.length) {
