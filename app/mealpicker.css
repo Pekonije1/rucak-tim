@@ -3,7 +3,7 @@
   display: flex; align-items: center; justify-content: space-between;
   text-align: left; cursor: pointer; color: var(--muted);
 }
-.mp-btn.mp-set { color: var(--text); font-weight: 600; border-color: var(--accent); }
+.mp-btn.mp-set { color: var(--text); font-weight: 600; }
 .mp-caret { opacity: 0.6; margin-left: 8px; }
 
 /* Telefon: donji panel */

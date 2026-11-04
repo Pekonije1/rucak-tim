@@ -23,43 +23,42 @@
 .gtable tbody tr:last-child > * { border-bottom: none; }
 .gtable tbody tr:hover td { background: color-mix(in srgb, var(--bg) 70%, transparent); }
 
-/* Zaglavlje: grafit, svaki dan sa svojom bojom ispod */
+/* Zaglavlje: svijetlo i mirno, kao ostatak aplikacije */
 .gtable thead th {
-  background: var(--ink);
-  color: var(--on-ink);
-  font-weight: 650;
-  font-size: 0.86rem;
-  letter-spacing: -0.01em;
-  border-right-color: color-mix(in srgb, var(--on-ink) 14%, transparent);
-  box-shadow: inset 0 -3px 0 var(--day, transparent);
+  background: var(--bg);
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-strong);
 }
-.gtable thead th span { display: block; font-weight: 500; font-size: 0.72rem; opacity: 0.7; }
+.gtable thead th span { display: block; font-weight: 500; font-size: 0.72rem; text-transform: none; letter-spacing: 0; opacity: 0.8; margin-top: 1px; }
 
-/* Kolona sa imenima: grafit sa zlatnim imenima */
+/* Kolona sa imenima */
 .gtable .gname {
   position: sticky;
   left: 0;
   z-index: 1;
-  background: var(--ink);
-  color: var(--gold);
+  background: var(--card);
+  color: var(--text);
   font-weight: 650;
   white-space: nowrap;
   min-width: 104px;
   text-align: left;
-  border-right-color: color-mix(in srgb, var(--on-ink) 14%, transparent);
-  border-bottom-color: color-mix(in srgb, var(--on-ink) 10%, transparent);
+  box-shadow: inset -1px 0 0 var(--border-strong);
 }
-.gtable thead .gcorner { z-index: 2; box-shadow: none; }
+.gtable thead .gcorner { z-index: 2; background: var(--bg); }
 .gtable td div + div { margin-top: 4px; }
 .gtable .gsum { font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.gtable thead .gsum { background: var(--accent); color: #fff; box-shadow: none; }
-.gempty { color: var(--muted); opacity: 0.6; }
+.gtable thead .gsum { color: var(--text); }
+.gempty { color: var(--muted); opacity: 0.5; }
 
-/* Današnji dan */
-.gtable thead th.gtoday { background: var(--today); color: #fff; box-shadow: none; }
-.gtable thead th.gtoday span { font-weight: 800; opacity: 1; text-transform: uppercase; letter-spacing: 0.06em; }
-.gtable td.gtoday { background: var(--today-soft); color: var(--today-ink); font-weight: 650; }
-.gtable tbody tr:hover td.gtoday { background: var(--today-soft); }
+/* Današnji dan: samo blago istaknut */
+.gtable thead th.gtoday { background: var(--accent-soft); color: var(--accent-ink); box-shadow: inset 0 -2px 0 var(--accent); }
+.gtable thead th.gtoday span { font-weight: 700; opacity: 1; text-transform: uppercase; letter-spacing: 0.05em; }
+.gtable td.gtoday { background: color-mix(in srgb, var(--accent-soft) 60%, var(--card)); }
+.gtable tbody tr:hover td.gtoday { background: var(--accent-soft); }
 
 /* Telefon: kartice po osobi */
 .gcards { display: none; }
@@ -72,17 +71,16 @@
 }
 .gcard-head {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 9px 12px; background: var(--ink); color: var(--gold);
+  padding: 9px 12px; background: var(--bg); color: var(--text); border-bottom: 1px solid var(--border);
 }
-.gcard-head .pill { background: color-mix(in srgb, var(--on-ink) 14%, transparent); color: var(--on-ink); }
 .gcard-row { display: flex; gap: 10px; padding: 7px 12px; border-top: 1px solid var(--border); align-items: center; }
 .gcard-row:first-of-type { border-top: none; }
 .gday {
   width: 38px; flex-shrink: 0; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
-  color: var(--day-ink, var(--muted));
+  color: var(--muted);
 }
-.gcard-row.gtoday { background: var(--today-soft); font-weight: 650; color: var(--today-ink); box-shadow: inset 3px 0 0 var(--today); }
-.gcard-row.gtoday .gday { color: var(--today); }
+.gcard-row.gtoday { background: color-mix(in srgb, var(--accent-soft) 60%, var(--card)); box-shadow: inset 2px 0 0 var(--accent); }
+.gcard-row.gtoday .gday { color: var(--accent-ink); }
 
 .gtable td.gedit { padding: 3px; }
 .gcard-row .mp-cell { text-align: left; padding: 4px 8px; min-height: 30px; }
