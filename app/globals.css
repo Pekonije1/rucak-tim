@@ -269,3 +269,11 @@ p { margin: 0 0 8px; }
   background: none; border: none; border-radius: 9px; padding: 10px 6px; cursor: pointer;
 }
 .seg button.active { background: var(--card); color: var(--accent); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12); }
+
+/* Današnji dan */
+.day.today { border: 2px solid var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.today-badge {
+  display: inline-block; margin-left: 8px; vertical-align: 2px;
+  font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+  color: #fff; background: var(--accent); padding: 3px 8px; border-radius: 999px;
+}

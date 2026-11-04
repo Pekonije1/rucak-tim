@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { fmtDate, weekDays } from '@/lib/dates';
+import { fmtDate, toISO, weekDays } from '@/lib/dates';
 import './grid.css';
 
 const eur = (n) => (Math.round((n || 0) * 100) / 100).toFixed(2).replace('.', ',') + ' €';
@@ -19,6 +19,7 @@ export default function Grid({ week, orders }) {
   }, []);
 
   const days = weekDays(week);
+  const today = toISO(new Date());
   const names = [...new Set([...users, ...Object.keys(orders || {})])];
   const cell = (n, date) => orders?.[n]?.days?.[date] || [];
   const total = (n) =>
@@ -52,7 +53,7 @@ export default function Grid({ week, orders }) {
             <tr>
               <th className="gname gcorner"></th>
               {days.map((d) => (
-                <th key={d.date}>{d.name}<span>{fmtDate(d.date)}</span></th>
+                <th key={d.date} className={d.date === today ? 'gtoday' : ''}>{d.name}<span>{d.date === today ? 'Danas' : fmtDate(d.date)}</span></th>
               ))}
               <th className="gsum">Iznos</th>
             </tr>
@@ -64,7 +65,7 @@ export default function Grid({ week, orders }) {
                 {days.map((d) => {
                   const lines = cell(n, d.date);
                   return (
-                    <td key={d.date}>
+                    <td key={d.date} className={d.date === today ? 'gtoday' : ''}>
                       {lines.length ? lines.map((l, i) => <div key={i}>{label(l)}</div>) : <span className="gempty">–</span>}
                     </td>
                   );
@@ -86,7 +87,7 @@ export default function Grid({ week, orders }) {
             {days.map((d) => {
               const lines = cell(n, d.date);
               return (
-                <div key={d.date} className="gcard-row">
+                <div key={d.date} className={'gcard-row' + (d.date === today ? ' gtoday' : '')}>
                   <span className="gday">{d.name.slice(0, 3)}</span>
                   <span className={lines.length ? '' : 'gempty'}>{lines.length ? lines.map(label).join(', ') : '–'}</span>
                 </div>

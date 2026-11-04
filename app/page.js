@@ -12,6 +12,7 @@ import { ADMIN, MEAL_PRICE } from '@/lib/config';
 import { downloadWeekXlsx } from '@/lib/excel';
 
 const LS_KEY = 'rucak_user';
+const todayISO = () => toISO(new Date());
 const eur = (n) => (Math.round((n || 0) * 100) / 100).toFixed(2).replace('.', ',') + ' €';
 const sum = (lines) => lines.reduce((s, l) => s + l.qty * l.price, 0);
 const count = (lines) => lines.reduce((s, l) => s + l.qty, 0);
@@ -303,10 +304,11 @@ function WeekTab({ user, menu, week, setWeek, goMenu }) {
           {weekDays(week).map((d) => {
             const line = days[d.date]?.[0];
             return (
-              <div key={d.date} className="card day">
+              <div key={d.date} className={'card day' + (d.date === todayISO() ? ' today' : '')}>
                 <div className="day-head">
                   <div>
                     <strong>{d.name}</strong> <span className="muted small">{fmtDate(d.date)}</span>
+                    {d.date === todayISO() && <span className="today-badge">Danas</span>}
                   </div>
                   {line && <span className="pill">{eur(line.price)}</span>}
                 </div>
@@ -486,9 +488,9 @@ function OverviewTab({ week, setWeek }) {
         <div className="grid2">
           <div className="days">
             {byDay.map((d) => (
-              <div key={d.date} className="card day">
+              <div key={d.date} className={'card day' + (d.date === todayISO() ? ' today' : '')}>
                 <div className="day-head">
-                  <div><strong>{d.name}</strong> <span className="muted small">{fmtDate(d.date)}</span></div>
+                  <div><strong>{d.name}</strong> <span className="muted small">{fmtDate(d.date)}</span>{d.date === todayISO() && <span className="today-badge">Danas</span>}</div>
                   {d.items.length > 0 && <span className="pill">{d.items.reduce((s, i) => s + i.qty, 0)} jela</span>}
                 </div>
                 {d.items.length === 0 && <p className="muted small">Ništa</p>}
