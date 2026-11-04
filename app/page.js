@@ -6,6 +6,7 @@ import {
 } from '@/lib/dates';
 import Grid from './Grid';
 import { MEAL_PRICE } from '@/lib/config';
+import { downloadWeekXlsx } from '@/lib/excel';
 
 const LS_KEY = 'rucak_user';
 const eur = (n) => (Math.round((n || 0) * 100) / 100).toFixed(2).replace('.', ',') + ' €';
@@ -442,22 +443,15 @@ function OverviewTab({ week, setWeek }) {
     setTimeout(() => setCopied(false), 2000);
   }
 
-  function downloadCSV() {
-    const rows = [['Dan', 'Datum', 'Ime', 'Jelo', 'Količina', 'Cijena', 'Ukupno']];
-    for (const d of weekDays(week)) {
-      for (const [name, o] of Object.entries(orders || {})) {
-        for (const l of o.days?.[d.date] || []) {
-          rows.push([d.name, d.date, name, l.name, l.qty, l.price.toFixed(2).replace('.', ','), (l.qty * l.price).toFixed(2).replace('.', ',')]);
-        }
-      }
+  const [exporting, setExporting] = useState(false);
+
+  async function downloadExcel() {
+    setExporting(true);
+    try {
+      await downloadWeekXlsx(week, orders);
+    } finally {
+      setExporting(false);
     }
-    const csv = rows.map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(';')).join('\r\n');
-    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `rucak-${week}.csv`;
-    a.click();
-    URL.revokeObjectURL(a.href);
   }
 
   const hasAny = byDay.some((d) => d.items.length);
@@ -468,7 +462,7 @@ function OverviewTab({ week, setWeek }) {
 
       <div className="actions">
         <button className="btn primary" onClick={copy} disabled={!hasAny}>{copied ? 'Kopirano ✓' : 'Kopiraj za dostavljača'}</button>
-        <button className="btn" onClick={downloadCSV} disabled={!hasAny}>Preuzmi Excel (CSV)</button>
+        <button className="btn" onClick={downloadExcel} disabled={!hasAny || exporting}>{exporting ? 'Pravim Excel…' : 'Preuzmi Excel'}</button>
       </div>
 
       {orders && <Grid week={week} orders={orders} />}
