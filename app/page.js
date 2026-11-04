@@ -594,6 +594,8 @@ function ProfileTab({ user, onLogout, theme, onTheme }) {
         )}
       </div>
 
+      <EmailCard user={user} />
+
       {user === ADMIN && <UsersAdmin me={user} />}
 
       <div className="card">
@@ -665,6 +667,58 @@ function UsersAdmin({ me }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function EmailCard({ user }) {
+  const [email, setEmail] = useState('');
+  const [saved, setSaved] = useState('');
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    api(`/api/email?user=${encodeURIComponent(user)}`).then((d) => { setEmail(d.email); setSaved(d.email); }).catch(() => {});
+  }, [user]);
+
+  async function save(e) {
+    e.preventDefault();
+    setMsg('');
+    try {
+      const d = await api('/api/email', { method: 'PUT', body: JSON.stringify({ user, email }) });
+      setEmail(d.email);
+      setSaved(d.email);
+      setMsg(d.email ? 'Sačuvano ✓ Podsjetnik stiže petkom ujutru.' : 'Podsjetnik isključen.');
+    } catch (e2) {
+      setMsg(e2.message);
+    }
+  }
+
+  async function test() {
+    setBusy(true);
+    setMsg('');
+    try {
+      const d = await api('/api/cron/reminder?test=1', { headers: { 'x-user': user } });
+      setMsg(d.sent?.length ? `Poslato na ${saved} ✓` : d.failed?.[0]?.error || d.note || 'Ništa nije poslato');
+    } catch (e2) {
+      setMsg(e2.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card">
+      <h3>📧 Podsjetnik petkom</h3>
+      <p className="muted small">Ako do petka ne popuniš narednu nedelju, stiže ti mejl. Ostavi prazno da ga isključiš.</p>
+      <form className="addform" onSubmit={save}>
+        <input className="input" type="email" inputMode="email" placeholder="tvoj@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+        <button className="btn primary">Sačuvaj</button>
+      </form>
+      {user === ADMIN && saved && (
+        <button className="btn full" onClick={test} disabled={busy}>{busy ? 'Šaljem…' : 'Pošalji mi probni mejl'}</button>
+      )}
+      {msg && <p className="muted small" style={{ marginTop: 8 }}>{msg}</p>}
     </div>
   );
 }

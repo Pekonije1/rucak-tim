@@ -31,5 +31,6 @@ export async function DELETE(req) {
   await store.srem('users', name);
   const weeks = await store.keys('week:*');
   for (const k of weeks) await store.hdel(k, name);
+  await store.hdel('emails', name);
   return Response.json({ ok: true });
 }
