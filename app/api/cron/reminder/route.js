@@ -2,24 +2,13 @@ import nodemailer from 'nodemailer';
 import { store } from '@/lib/db';
 import { ADMIN } from '@/lib/config';
 import { addDays, fmtDate, mondayOf, parseISO, toISO, weekDays } from '@/lib/dates';
+import { reminderHtml, reminderLink, reminderSubject } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
-
-const APP_URL = 'https://rucak-tim.vercel.app';
 
 function nextMondayPodgorica() {
   const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Podgorica' }).format(new Date());
   return toISO(addDays(mondayOf(parseISO(today)), 7));
-}
-
-function html(name, range) {
-  return `<div style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;max-width:480px;margin:0 auto;padding:24px;color:#1c1b19">
-  <div style="font-size:32px">🍽️</div>
-  <h2 style="margin:8px 0">Ćao ${name}, gladan si sledeće nedelje?</h2>
-  <p style="color:#6f6c66;line-height:1.5">Još nisi izabrao ručak za <b>${range}</b>. Treba ti minut, a ako ti se jede isto kao ove nedelje, samo klikni "Kopiraj prethodnu nedelju".</p>
-  <p style="margin:24px 0"><a href="${APP_URL}" style="background:#e8590c;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:600;display:inline-block">Popuni ručak</a></p>
-  <p style="color:#a09d96;font-size:12px">Ovaj podsjetnik stiže petkom. Isključuješ ga tako što obrišeš email u Profilu.</p>
-</div>`;
 }
 
 // Vercel Cron petkom: podsjeti sve koji imaju email, a nisu popunili narednu nedelju.
@@ -39,7 +28,12 @@ export async function GET(req) {
   const week = nextMondayPodgorica();
   const days = weekDays(week);
   const range = `${fmtDate(days[0].date)} – ${fmtDate(days[4].date)}`;
-  const [emails, orders] = await Promise.all([store.hgetall('emails'), store.hgetall(`week:${week}`)]);
+  const thisMonday = toISO(addDays(parseISO(week), -7));
+  const [emails, orders, current] = await Promise.all([
+    store.hgetall('emails'),
+    store.hgetall(`week:${week}`),
+    store.hgetall(`week:${thisMonday}`),
+  ]);
 
   const targets = test
     ? (emails[ADMIN] ? [[ADMIN, emails[ADMIN]]] : [])
@@ -58,12 +52,14 @@ export async function GET(req) {
   const failed = [];
   for (const [name, to] of targets) {
     try {
+      const link = reminderLink(name, week);
+      const thisWeek = Object.keys(current?.[name]?.days || {}).sort().map((d) => current[name].days[d][0]?.name).filter(Boolean);
       await transport.sendMail({
         from: `"Ručak 🍽️" <${process.env.GMAIL_USER}>`,
         to,
-        subject: `${test ? '[TEST] ' : ''}Izaberi ručak za ${range}`,
-        html: html(name, range),
-        text: `Ćao ${name}, još nisi izabrao ručak za ${range}. Popuni ovdje: ${APP_URL}`,
+        subject: reminderSubject(name, test),
+        html: reminderHtml({ name, range, link, thisWeek }),
+        text: `Hoćemo li jesti šta naredne nedelje, ${name}? Izaberi ručak za ${range}: ${link}`,
       });
       sent.push(name);
     } catch (e) {

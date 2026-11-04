@@ -32,8 +32,16 @@ export default function Home() {
   const [user, setUser] = useState(null);
   const [ready, setReady] = useState(false);
 
+  const [startWeek, setStartWeek] = useState(null);
+
   useEffect(() => {
     try {
+      const qs = new URLSearchParams(window.location.search);
+      const qu = qs.get('u');
+      const qw = qs.get('w');
+      if (qu) localStorage.setItem(LS_KEY, qu);
+      if (qw && /^\d{4}-\d{2}-\d{2}$/.test(qw)) setStartWeek(qw);
+      if (qu || qw) window.history.replaceState(null, '', window.location.pathname);
       const u = localStorage.getItem(LS_KEY);
       if (u) setUser(u);
     } catch {}
@@ -54,6 +62,7 @@ export default function Home() {
   return (
     <App
       user={user}
+      startWeek={startWeek}
       onLogout={() => {
         try { localStorage.removeItem(LS_KEY); } catch {}
         setUser(null);
@@ -128,10 +137,10 @@ const TABS = [
   { id: 'profile', label: 'Profil', icon: '👤' },
 ];
 
-function App({ user, onLogout }) {
+function App({ user, onLogout, startWeek }) {
   const [tab, setTab] = useState('week');
   const [menu, setMenu] = useState([]);
-  const [week, setWeek] = useState(() => toISO(mondayOf(new Date())));
+  const [week, setWeek] = useState(() => startWeek || toISO(mondayOf(new Date())));
   const [theme, setTheme] = useState('system');
   useEffect(() => setTheme(readTheme()), []);
   const changeTheme = (t) => { applyTheme(t); setTheme(t); };
