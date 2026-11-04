@@ -22,3 +22,6 @@ Bez env varijabli aplikacija koristi memoriju (podaci se brišu na restart). Za 
 - `app/page.js` cijeli UI
 - `app/Grid.js` tabela nedelje (osobe × dani)
 - `app/api/*` API rute
+
+## Deploy
+Svaki push na `main` automatski ide na Vercel produkciju.
