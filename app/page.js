@@ -816,7 +816,7 @@ function EmailCard({ user }) {
       const d = await api('/api/email', { method: 'PUT', body: JSON.stringify({ user, email }) });
       setEmail(d.email);
       setSaved(d.email);
-      setMsg(d.email ? 'Sačuvano ✓ Podsjetnik stiže petkom ujutru.' : 'Podsjetnik isključen.');
+      setMsg(d.email ? 'Sačuvano ✓ Podsjetnik stiže petkom i ponedeljkom ujutru, samo ako nisi popunio.' : 'Podsjetnik isključen.');
     } catch (e2) {
       setMsg(e2.message);
     }
@@ -837,8 +837,8 @@ function EmailCard({ user }) {
 
   return (
     <div className="card">
-      <h3>📧 Podsjetnik petkom</h3>
-      <p className="muted small">Ako do petka ne popuniš narednu nedelju, stiže ti mejl. Ostavi prazno da ga isključiš.</p>
+      <h3>📧 Podsjetnik petkom i ponedeljkom</h3>
+      <p className="muted small">Petkom ako nisi popunio narednu nedelju, a ponedeljkom ujutru (oko 8h) ako nisi popunio tekuću. Ostavi prazno da ga isključiš.</p>
       <form className="addform" onSubmit={save}>
         <input className="input" type="email" inputMode="email" placeholder="tvoj@email.com" value={email} onChange={(e) => setEmail(e.target.value)} />
         <button className="btn primary">Sačuvaj</button>
