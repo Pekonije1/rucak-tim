@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { viewImage } from '@/lib/image';
 import './mealpicker.css';
 
 // "pileci cevapi" nalazi "Pileći ćevapi"
@@ -13,6 +14,7 @@ export default function MealPicker({ value, label, menu, onChange, compact = fal
   const inputRef = useRef(null);
   const btnRef = useRef(null);
   const [pos, setPos] = useState(null);
+  const current = menu.find((m) => m.id === value);
 
   useEffect(() => {
     if (!open) return;
@@ -68,7 +70,15 @@ export default function MealPicker({ value, label, menu, onChange, compact = fal
         className={(compact ? 'mp-cell' : 'input mp-btn') + (label ? ' mp-set' : '')}
         onClick={() => setOpen((o) => !o)}
       >
-        <span>{label || placeholder}</span>
+        {!compact && current?.image && (
+          <img
+            className="mp-thumb"
+            src={current.image}
+            alt=""
+            onClick={(e) => { e.stopPropagation(); viewImage(current.image, current.name); }}
+          />
+        )}
+        <span className="mp-label">{label || placeholder}</span>
         {!compact && <span className="mp-caret">▾</span>}
       </button>
 
@@ -95,7 +105,8 @@ export default function MealPicker({ value, label, menu, onChange, compact = fal
                   className={'mp-item' + (m.id === value ? ' active' : '')}
                   onClick={() => pick(m.id)}
                 >
-                  {m.name}
+                  {m.image ? <img className="mp-item-thumb" src={m.image} alt="" loading="lazy" /> : <span className="mp-item-thumb empty">🍽️</span>}
+                  <span>{m.name}</span>
                 </button>
               ))}
               {list.length === 0 && <p className="muted small mp-empty">Nema jela za „{q}”</p>}

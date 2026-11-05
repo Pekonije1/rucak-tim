@@ -403,3 +403,36 @@ textarea.input { line-height: 1.45; }
 
 .stats-pair { display: grid; gap: 0 12px; grid-template-columns: minmax(0, 1fr); align-items: start; }
 @media (min-width: 960px) { .stats-pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+
+/* Slike u meniju */
+.menu-row { flex-wrap: nowrap; }
+.thumb {
+  width: 44px; height: 44px; flex-shrink: 0; padding: 0; overflow: hidden;
+  display: grid; place-items: center; cursor: zoom-in;
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 1.1rem;
+}
+.thumb.empty { cursor: pointer; opacity: 0.6; border-style: dashed; }
+.thumb.empty:hover { opacity: 1; border-color: var(--accent); }
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.spin { width: 18px; height: 18px; border: 2px solid var(--border-strong); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 480px) {
+  .menu-row .btn.sm { padding: 5px 8px; }
+}
+
+/* Pregled slike */
+.lightbox {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(8, 10, 14, 0.86);
+  display: grid; place-items: center; padding: 20px; cursor: zoom-out;
+  animation: fade 0.15s ease-out;
+}
+.lightbox figure { margin: 0; max-width: min(92vw, 900px); cursor: default; text-align: center; }
+.lightbox img { max-width: 100%; max-height: 78dvh; border-radius: var(--radius); display: block; margin: 0 auto; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5); }
+.lightbox figcaption { color: #fff; font-weight: 650; margin-top: 12px; font-size: 1.05rem; }
+.lightbox-close {
+  position: absolute; top: max(14px, env(safe-area-inset-top)); right: 14px;
+  width: 42px; height: 42px; border-radius: 50%; border: none; cursor: pointer;
+  background: rgba(255, 255, 255, 0.14); color: #fff; font-size: 1.1rem;
+}
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }

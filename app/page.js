@@ -7,6 +7,8 @@ import {
 import Grid from './Grid';
 import MealPicker from './MealPicker';
 import Fame from './Fame';
+import Lightbox from './Lightbox';
+import { compressImage, viewImage } from '@/lib/image';
 import { THEMES, applyTheme, readTheme } from '@/lib/theme';
 import { MEAL_PRICE, isAdmin } from '@/lib/config';
 import { downloadWeekXlsx } from '@/lib/excel';
@@ -199,6 +201,8 @@ function App({ user, onLogout, startWeek }) {
         {tab === 'profile' && <ProfileTab user={user} onLogout={onLogout} theme={theme} onTheme={changeTheme} />}
       </main>
 
+      <Lightbox />
+
       <nav className="tabs-bottom" style={{ gridTemplateColumns: `repeat(${tabs.length}, 1fr)` }}>
         {tabs.map((t) => (
           <button key={t.id} className={'btab' + (tab === t.id ? ' active' : '')} onClick={() => setTab(t.id)}>
@@ -376,6 +380,41 @@ function MenuTab({ menu, reload }) {
     if (await save({ name })) setName('');
   }
 
+  const fileRef = useRef(null);
+  const target = useRef(null);
+  const [uploading, setUploading] = useState(null);
+
+  function pick(item) {
+    target.current = item;
+    fileRef.current.value = '';
+    fileRef.current.click();
+  }
+
+  async function onFile(e) {
+    const file = e.target.files?.[0];
+    const item = target.current;
+    if (!file || !item) return;
+    setErr('');
+    setUploading(item.id);
+    try {
+      const blob = await compressImage(file);
+      const res = await fetch(`/api/menu/image?id=${item.id}`, { method: 'POST', headers: { 'Content-Type': blob.type }, body: blob });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error || 'Upload nije uspio');
+      reload();
+    } catch (e2) {
+      setErr(e2.message);
+    } finally {
+      setUploading(null);
+    }
+  }
+
+  async function removeImage(item) {
+    if (!confirm(`Ukloniti sliku za "${item.name}"?`)) return;
+    await api(`/api/menu/image?id=${item.id}`, { method: 'DELETE' }).catch(() => {});
+    reload();
+  }
+
   async function remove(item) {
     if (!confirm(`Obrisati "${item.name}" iz menija? Stare porudžbine ostaju.`)) return;
     await api(`/api/menu?id=${item.id}`, { method: 'DELETE' }).catch(() => {});
@@ -385,13 +424,14 @@ function MenuTab({ menu, reload }) {
   return (
     <section>
       <h2>Meni</h2>
-      <p className="muted small">Svi vide i svi mogu da mijenjaju. Svaki obrok košta {eur(MEAL_PRICE)}, jedno jelo po danu.</p>
+      <p className="muted small">Svi vide i svi mogu da mijenjaju i dodaju slike jela 📷. Svaki obrok košta {eur(MEAL_PRICE)}, jedno jelo po danu.</p>
 
       <form className="card addform" onSubmit={add}>
         <input className="input" placeholder="Naziv jela" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
         <button className="btn primary">Dodaj</button>
       </form>
       {err && <p className="error">{err}</p>}
+      <input ref={fileRef} type="file" accept="image/*" hidden onChange={onFile} />
 
       <div className="card list">
         {menu.length === 0 && <p className="muted center">Još nema jela.</p>}
@@ -407,8 +447,22 @@ function MenuTab({ menu, reload }) {
               <button type="button" className="btn sm" onClick={() => setEditing(null)}>Otkaži</button>
             </form>
           ) : (
-            <div key={m.id} className="row">
+            <div key={m.id} className="row menu-row">
+              <button
+                type="button"
+                className={'thumb' + (m.image ? '' : ' empty')}
+                onClick={() => (m.image ? viewImage(m.image, m.name) : pick(m))}
+                aria-label={m.image ? `Pogledaj sliku: ${m.name}` : `Dodaj sliku: ${m.name}`}
+              >
+                {uploading === m.id ? <span className="spin" /> : m.image ? <img src={m.image} alt="" loading="lazy" /> : '📷'}
+              </button>
               <span className="grow">{m.name}</span>
+              {m.image && (
+                <>
+                  <button className="btn sm" onClick={() => pick(m)} disabled={uploading === m.id} title="Zamijeni sliku" aria-label={`Zamijeni sliku: ${m.name}`}>📷</button>
+                  <button className="btn sm" onClick={() => removeImage(m)} title="Ukloni sliku" aria-label={`Ukloni sliku: ${m.name}`}>🗑️</button>
+                </>
+              )}
               <button className="btn sm" onClick={() => setEditing({ ...m })}>Izmijeni</button>
               <button className="btn sm danger" onClick={() => remove(m)} aria-label="Obriši">✕</button>
             </div>
